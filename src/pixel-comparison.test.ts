@@ -11,9 +11,13 @@
  */
 
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { fileURLToPath } from 'node:url';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { openPdf } from './index.js';
+import type { ComparisonResult, SnapshotOptions } from './test-utils/image-comparison.js';
 import { cleanupDiffs, createSnapshotMatcher } from './test-utils/image-comparison.js';
+
+const currentDir: string = path.dirname(fileURLToPath(import.meta.url));
 
 // Check if PDFium and sharp are available
 let pdfiumAvailable = false;
@@ -23,16 +27,21 @@ try {
   await PDFiumLibrary.init();
   pdfiumAvailable = true;
 } catch (error) {
-  console.warn('PDFium or sharp not available - skipping pixel comparison tests:', error);
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn('PDFium or sharp not available - skipping pixel comparison tests:', message);
 }
 
 const describeWithPdfium: typeof describe = pdfiumAvailable ? describe : describe.skip;
 
 // Path to test fixtures
-const FIXTURES_DIR = path.join(import.meta.dirname, '../fixtures/pdfs');
+const FIXTURES_DIR: string = path.join(currentDir, '../fixtures/pdfs');
 
 // Create snapshot matcher
-const matchSnapshot = createSnapshotMatcher(import.meta.url, {
+const matchSnapshot: (
+  actual: Buffer,
+  snapshotName: string,
+  overrideOptions?: SnapshotOptions,
+) => ComparisonResult = createSnapshotMatcher(import.meta.url, {
   threshold: 0.1,
   maxDiffPercentage: 0, // Exact match required
 });
@@ -43,11 +52,6 @@ describeWithPdfium('Pixel Comparison Tests', () => {
     cleanupDiffs(import.meta.url);
   });
 
-  afterAll(() => {
-    // Clean up diff files if all tests pass
-    // (they're kept on failure for debugging)
-  });
-
   describe('simple-text.pdf', () => {
     it('should render page 1 correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'simple-text.pdf');
@@ -55,7 +59,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'simple-text-page-1');
+        const result = matchSnapshot(page.buffer, 'simple-text/page-1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -69,7 +73,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 2.0 });
-        const result = matchSnapshot(page.buffer, 'simple-text-page-1-2x');
+        const result = matchSnapshot(page.buffer, 'simple-text/page-1-2x');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -85,7 +89,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'shapes-page-1');
+        const result = matchSnapshot(page.buffer, 'shapes/page-1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -104,7 +108,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
         for (let pageNum = 1; pageNum <= pdf.pageCount; pageNum++) {
           const page = await pdf.renderPage(pageNum, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, `multi-page-page-${pageNum}`);
+          const result = matchSnapshot(page.buffer, `multi-page/page-${pageNum}`);
 
           expect(result.match, `Page ${pageNum} diff: ${result.diffPercentage.toFixed(2)}%`).toBe(
             true,
@@ -123,7 +127,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'gradient-page-1');
+        const result = matchSnapshot(page.buffer, 'gradient/page-1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
