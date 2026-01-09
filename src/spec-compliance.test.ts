@@ -311,10 +311,18 @@ describeWithCanvas('Visual Regression Tests', () => {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
         const existingSnapshot = loadSnapshot(snapshotPath);
 
-        if (isUpdateMode() || !existingSnapshot) {
-          // Save new snapshot
+        if (isUpdateMode()) {
+          // Update mode: save/overwrite snapshot
           saveSnapshot(snapshotPath, page.buffer);
           console.log(`Saved snapshot: ${snapshotPath}`);
+        } else if (!existingSnapshot) {
+          // No snapshot exists and not in update mode - fail with instructions
+          await pdf.close();
+          throw new Error(
+            `Snapshot not found: ${snapshotPath}\n` +
+              'Run with UPDATE_SNAPSHOTS=true to generate initial snapshots:\n' +
+              '  UPDATE_SNAPSHOTS=true pnpm test',
+          );
         } else {
           // Compare with existing snapshot
           const result = compareImages(page.buffer, existingSnapshot, {
@@ -322,12 +330,12 @@ describeWithCanvas('Visual Regression Tests', () => {
             maxDiffPercentage: 1,
           });
 
-          expect(result.match).toBe(true);
           if (!result.match) {
             console.error(
               `Visual mismatch for ${file.name}: ${result.diffPercentage.toFixed(2)}% different (${result.diffPixels} pixels)`,
             );
           }
+          expect(result.match).toBe(true);
         }
 
         await pdf.close();
