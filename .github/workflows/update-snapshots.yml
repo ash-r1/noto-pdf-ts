@@ -7,15 +7,23 @@ on:
         description: 'Branch to update snapshots on'
         required: true
         default: 'main'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/pixel-comparison.test.ts'
+      - 'src/test-utils/**'
+      - 'fixtures/**'
 
 jobs:
   update-snapshots:
     name: Update Snapshots
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ github.event.inputs.branch || github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install canvas system dependencies
