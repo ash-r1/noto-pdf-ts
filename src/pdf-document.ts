@@ -273,6 +273,8 @@ export class PdfDocumentImpl implements PdfDocument {
 
     try {
       // PDFium uses 0-indexed pages
+      // Note: PDFiumPage objects don't have explicit cleanup methods.
+      // Memory is managed internally and released when PDFiumDocument.destroy() is called.
       const page = this.document.getPage(pageNumber - 1);
 
       // Render to raw RGBA bitmap

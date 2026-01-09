@@ -144,13 +144,14 @@ async function checkSharp(): Promise<CheckResult> {
 
   try {
     // Try to actually load and use sharp
-    const sharp = await import('sharp');
+    // Dynamic import returns module namespace, so we need .default for the default export
+    const sharpModule = await import('sharp');
+    const sharpFn = sharpModule.default;
 
     // Create a simple test image to verify it works
-    const testBuffer = await sharp
-      .default(Buffer.from([255, 0, 0, 255]), {
-        raw: { width: 1, height: 1, channels: 4 },
-      })
+    const testBuffer = await sharpFn(Buffer.from([255, 0, 0, 255]), {
+      raw: { width: 1, height: 1, channels: 4 },
+    })
       .png()
       .toBuffer();
 
@@ -232,10 +233,11 @@ async function checkPdfRendering(pdfiumOk: boolean, sharpOk: boolean): Promise<C
   }
 
   try {
-    // Dynamic imports
+    // Dynamic imports (module namespace objects require .default for default exports)
     const { PDFDocument, StandardFonts } = await import('pdf-lib');
     const { PDFiumLibrary } = await import('@hyzyla/pdfium');
-    const sharp = await import('sharp');
+    const sharpModule = await import('sharp');
+    const sharpFn = sharpModule.default;
 
     // Create a minimal test PDF
     const pdfDoc = await PDFDocument.create();
@@ -254,10 +256,10 @@ async function checkPdfRendering(pdfiumOk: boolean, sharpOk: boolean): Promise<C
     const { data, width, height } = image;
 
     // Convert to PNG using sharp
-    const buffer = await sharp
-      .default(Buffer.from(data), {
-        raw: { width, height, channels: 4 },
-      })
+    // Note: PDFiumPage doesn't have a destroy method - cleanup is handled by PDFiumDocument.destroy()
+    const buffer = await sharpFn(Buffer.from(data), {
+      raw: { width, height, channels: 4 },
+    })
       .png()
       .toBuffer();
 
