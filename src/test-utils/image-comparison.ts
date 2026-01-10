@@ -10,6 +10,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 
@@ -86,14 +87,10 @@ export function compareImages(
   const { width, height } = actualPng;
   const diffPng = new PNG({ width, height });
 
-  const diffPixels = pixelmatch(
-    actualPng.data,
-    expectedPng.data,
-    diffPng.data,
-    width,
-    height,
-    { threshold, includeAA },
-  );
+  const diffPixels = pixelmatch(actualPng.data, expectedPng.data, diffPng.data, width, height, {
+    threshold,
+    includeAA,
+  });
 
   const totalPixels = width * height;
   const diffPercentage = (diffPixels / totalPixels) * 100;
@@ -222,9 +219,7 @@ export function createSnapshotMatcher(
   options: SnapshotOptions = {},
 ): (actual: Buffer, snapshotName: string, overrideOptions?: SnapshotOptions) => ComparisonResult {
   // Convert file:// URL to path if needed
-  const filePath = testFilePath.startsWith('file://')
-    ? new URL(testFilePath).pathname
-    : testFilePath;
+  const filePath = testFilePath.startsWith('file://') ? fileURLToPath(testFilePath) : testFilePath;
 
   return (
     actual: Buffer,
