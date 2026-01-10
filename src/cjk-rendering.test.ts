@@ -3,6 +3,7 @@
  *
  * These tests verify that PDFs containing CJK characters are rendered correctly.
  * The tests cover various font types including TrueType, OpenType, and CID fonts.
+ * All pages of each PDF are tested.
  *
  * To update snapshots when rendering changes intentionally:
  *   UPDATE_SNAPSHOTS=true pnpm test cjk-rendering
@@ -38,6 +39,32 @@ const matchSnapshot = createSnapshotMatcher(import.meta.url, {
   maxDiffPercentage: 1, // Allow 1% difference for cross-platform font rendering
 });
 
+/**
+ * Helper function to test all pages of a PDF
+ */
+async function testAllPages(pdfPath: string, snapshotPrefix: string) {
+  const pdf = await openPdf(pdfPath);
+
+  try {
+    const pageCount = pdf.pageCount;
+    expect(pageCount).toBeGreaterThan(0);
+
+    for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+      const page = await pdf.renderPage(pageNum, { format: 'png', scale: 1.0 });
+      const result = matchSnapshot(page.buffer, `${snapshotPrefix}-page-${pageNum}`);
+
+      expect(
+        result.match,
+        `Page ${pageNum}/${pageCount} diff: ${result.diffPercentage.toFixed(2)}%`,
+      ).toBe(true);
+    }
+
+    return pageCount;
+  } finally {
+    await pdf.close();
+  }
+}
+
 describeWithPdfium('CJK Rendering Tests', () => {
   beforeAll(() => {
     cleanupDiffs(import.meta.url);
@@ -48,187 +75,70 @@ describeWithPdfium('CJK Rendering Tests', () => {
   });
 
   describe('Japanese PDFs', () => {
-    describe('SFAA_Japanese.pdf - Japanese document with embedded fonts', () => {
-      it('should render first page correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'jp/SFAA_Japanese.pdf');
-        const pdf = await openPdf(pdfPath);
+    it('SFAA_Japanese.pdf - should render all pages correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'jp/SFAA_Japanese.pdf');
+      const pageCount = await testAllPages(pdfPath, 'jp-sfaa');
+      expect(pageCount).toBeGreaterThan(0);
+    }, 60000); // 60 second timeout for 220 pages
 
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'jp-sfaa-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
+    it('ichiji.pdf - should render all pages correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'jp/ichiji.pdf');
+      const pageCount = await testAllPages(pdfPath, 'jp-ichiji');
+      expect(pageCount).toBeGreaterThan(0);
     });
 
-    describe('ichiji.pdf - Japanese form document', () => {
-      it('should render first page correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'jp/ichiji.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'jp-ichiji-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
+    it('TaroUTR50SortedList112.pdf - should render all pages with vertical text correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'jp/TaroUTR50SortedList112.pdf');
+      const pageCount = await testAllPages(pdfPath, 'jp-taro-utr50');
+      expect(pageCount).toBeGreaterThan(0);
     });
 
-    describe('TaroUTR50SortedList112.pdf - Japanese vertical text', () => {
-      it('should render first page with vertical text correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'jp/TaroUTR50SortedList112.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'jp-taro-utr50-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
+    it('cid_cff.pdf - should render all pages with CID-keyed CFF font correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'jp/cid_cff.pdf');
+      const pageCount = await testAllPages(pdfPath, 'jp-cid-cff');
+      expect(pageCount).toBeGreaterThan(0);
     });
 
-    describe('cid_cff.pdf - CID-keyed CFF font', () => {
-      it('should render CID-keyed CFF font correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'jp/cid_cff.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'jp-cid-cff-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
-    });
-
-    describe('arial_unicode_ab_cidfont.pdf - Arial Unicode CID font', () => {
-      it('should render Arial Unicode CID font correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'jp/arial_unicode_ab_cidfont.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'jp-arial-unicode-cid-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
+    it('arial_unicode_ab_cidfont.pdf - should render all pages with Arial Unicode CID font correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'jp/arial_unicode_ab_cidfont.pdf');
+      const pageCount = await testAllPages(pdfPath, 'jp-arial-unicode-cid');
+      expect(pageCount).toBeGreaterThan(0);
     });
   });
 
   describe('Chinese PDFs', () => {
-    describe('ap-chinese.pdf - AP Chinese exam with simplified/traditional characters', () => {
-      it('should render first page correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'cn/ap-chinese.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'cn-ap-chinese-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
-
-      it('should render a page with Chinese characters', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'cn/ap-chinese.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          // Page 3 typically has Chinese content
-          if (pdf.pageCount >= 3) {
-            const page = await pdf.renderPage(3, { format: 'png', scale: 1.0 });
-            const result = matchSnapshot(page.buffer, 'cn-ap-chinese-page-3');
-
-            expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-          }
-        } finally {
-          await pdf.close();
-        }
-      });
+    it('ap-chinese.pdf - should render all pages correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'cn/ap-chinese.pdf');
+      const pageCount = await testAllPages(pdfPath, 'cn-ap-chinese');
+      expect(pageCount).toBeGreaterThan(0);
     });
   });
 
   describe('Korean PDFs', () => {
-    describe('eps-hangul.pdf - Korean Hangul document', () => {
-      it('should render first page correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'kr/eps-hangul.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'kr-eps-hangul-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
+    it('eps-hangul.pdf - should render all pages correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'kr/eps-hangul.pdf');
+      const pageCount = await testAllPages(pdfPath, 'kr-eps-hangul');
+      expect(pageCount).toBeGreaterThan(0);
     });
 
-    describe('hangul-practice-worksheet.pdf - Korean practice worksheet', () => {
-      it('should render first page correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'kr/hangul-practice-worksheet.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'kr-hangul-worksheet-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
+    it('hangul-practice-worksheet.pdf - should render all pages correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'kr/hangul-practice-worksheet.pdf');
+      const pageCount = await testAllPages(pdfPath, 'kr-hangul-worksheet');
+      expect(pageCount).toBeGreaterThan(0);
     });
   });
 
   describe('CID and Unicode font PDFs', () => {
-    describe('ArabicCIDTrueType.pdf - Arabic CID TrueType', () => {
-      it('should render Arabic CID TrueType correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'ArabicCIDTrueType.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'arabic-cid-truetype-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
+    it('ArabicCIDTrueType.pdf - should render all pages correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'ArabicCIDTrueType.pdf');
+      const pageCount = await testAllPages(pdfPath, 'arabic-cid-truetype');
+      expect(pageCount).toBeGreaterThan(0);
     });
 
-    describe('pdf20-utf8-test.pdf - PDF 2.0 UTF-8 test', () => {
-      it('should render UTF-8 encoded text correctly', async () => {
-        const pdfPath = path.join(FIXTURES_DIR, 'pdf20-utf8-test.pdf');
-        const pdf = await openPdf(pdfPath);
-
-        try {
-          const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, 'pdf20-utf8-test-page-1');
-
-          expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-        } finally {
-          await pdf.close();
-        }
-      });
+    it('pdf20-utf8-test.pdf - should render all pages correctly', async () => {
+      const pdfPath = path.join(FIXTURES_DIR, 'pdf20-utf8-test.pdf');
+      const pageCount = await testAllPages(pdfPath, 'pdf20-utf8-test');
+      expect(pageCount).toBeGreaterThan(0);
     });
   });
 
@@ -294,41 +204,6 @@ describeWithPdfium('CJK Rendering Tests', () => {
 
       expect(result.match).toBe(true);
       expect(result.diffPixels).toBe(0);
-    });
-  });
-
-  describe('CJK PDF page count verification', () => {
-    it('should correctly count pages in Japanese PDFs', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'jp/SFAA_Japanese.pdf');
-      const pdf = await openPdf(pdfPath);
-
-      try {
-        expect(pdf.pageCount).toBeGreaterThan(0);
-      } finally {
-        await pdf.close();
-      }
-    });
-
-    it('should correctly count pages in Chinese PDFs', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'cn/ap-chinese.pdf');
-      const pdf = await openPdf(pdfPath);
-
-      try {
-        expect(pdf.pageCount).toBeGreaterThan(0);
-      } finally {
-        await pdf.close();
-      }
-    });
-
-    it('should correctly count pages in Korean PDFs', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'kr/eps-hangul.pdf');
-      const pdf = await openPdf(pdfPath);
-
-      try {
-        expect(pdf.pageCount).toBeGreaterThan(0);
-      } finally {
-        await pdf.close();
-      }
     });
   });
 });
