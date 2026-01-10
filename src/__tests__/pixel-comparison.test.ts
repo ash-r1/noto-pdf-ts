@@ -13,8 +13,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openPdf } from './index.js';
-import { cleanupDiffs, createSnapshotMatcher } from './test-utils/image-comparison.js';
+import { openPdf } from '../index.js';
+import { cleanupDiffs, createSnapshotMatcher } from '../test-utils/image-comparison.js';
 
 // Check if PDFium and sharp are available
 let pdfiumAvailable = false;
@@ -31,7 +31,7 @@ const describeWithPdfium: typeof describe = pdfiumAvailable ? describe : describ
 
 // Path to test fixtures
 const testDir: string = path.dirname(fileURLToPath(import.meta.url));
-const FIXTURES_DIR: string = path.join(testDir, '../fixtures/pdfs');
+const FIXTURES_DIR: string = path.join(testDir, '../../fixtures/pdfs');
 
 // Create snapshot matcher
 const matchSnapshot: ReturnType<typeof createSnapshotMatcher> = createSnapshotMatcher(
@@ -60,7 +60,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'simple-text-page-1');
+        const result = matchSnapshot(page.buffer, 'simple-text/page-1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -74,7 +74,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 2.0 });
-        const result = matchSnapshot(page.buffer, 'simple-text-page-1-2x');
+        const result = matchSnapshot(page.buffer, 'simple-text/page-1-2x');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -90,7 +90,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'shapes-page-1');
+        const result = matchSnapshot(page.buffer, 'shapes/page-1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -109,7 +109,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
         for (let pageNum = 1; pageNum <= pdf.pageCount; pageNum++) {
           const page = await pdf.renderPage(pageNum, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, `multi-page-page-${pageNum}`);
+          const result = matchSnapshot(page.buffer, `multi-page/page-${pageNum}`);
 
           expect(result.match, `Page ${pageNum} diff: ${result.diffPercentage.toFixed(2)}%`).toBe(
             true,
@@ -128,7 +128,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'gradient-page-1');
+        const result = matchSnapshot(page.buffer, 'gradient/page-1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -152,7 +152,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
       await pdf2.close();
 
       // Compare the two renders
-      const { compareImages } = await import('./test-utils/image-comparison.js');
+      const { compareImages } = await import('../test-utils/image-comparison.js');
       const result = compareImages(page1.buffer, page2.buffer);
 
       expect(result.match).toBe(true);
@@ -163,7 +163,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
 describeWithPdfium('Image Comparison Utility', () => {
   it('should detect differences between images', async () => {
-    const { compareImages } = await import('./test-utils/image-comparison.js');
+    const { compareImages } = await import('../test-utils/image-comparison.js');
     const { PNG } = await import('pngjs');
 
     // Create two slightly different images
@@ -202,7 +202,7 @@ describeWithPdfium('Image Comparison Utility', () => {
   });
 
   it('should match identical images', async () => {
-    const { compareImages } = await import('./test-utils/image-comparison.js');
+    const { compareImages } = await import('../test-utils/image-comparison.js');
     const { PNG } = await import('pngjs');
 
     const width = 100;
@@ -228,7 +228,7 @@ describeWithPdfium('Image Comparison Utility', () => {
   });
 
   it('should detect dimension mismatch', async () => {
-    const { compareImages } = await import('./test-utils/image-comparison.js');
+    const { compareImages } = await import('../test-utils/image-comparison.js');
     const { PNG } = await import('pngjs');
 
     const png1 = new PNG({ width: 100, height: 100 });

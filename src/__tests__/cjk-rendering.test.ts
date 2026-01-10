@@ -13,8 +13,8 @@
 
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openPdf } from './index.js';
-import { cleanupDiffs, createSnapshotMatcher } from './test-utils/image-comparison.js';
+import { openPdf } from '../index.js';
+import { cleanupDiffs, createSnapshotMatcher } from '../test-utils/image-comparison.js';
 
 // Check if PDFium and sharp are available
 let pdfiumAvailable = false;
@@ -30,7 +30,7 @@ try {
 const describeWithPdfium: typeof describe = pdfiumAvailable ? describe : describe.skip;
 
 // Path to test fixtures
-const FIXTURES_DIR = path.join(import.meta.dirname, '../fixtures/pdfs');
+const FIXTURES_DIR = path.join(import.meta.dirname, '../../fixtures/pdfs');
 
 // Create snapshot matcher with slightly higher tolerance for CJK fonts
 // (different systems may render CJK fonts slightly differently)
@@ -53,7 +53,7 @@ async function testAllPages(pdfPath: string, snapshotPrefix: string, maxPages?: 
 
     for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
       const page = await pdf.renderPage(pageNum, { format: 'png', scale: 1.0 });
-      const result = matchSnapshot(page.buffer, `${snapshotPrefix}-page-${pageNum}`);
+      const result = matchSnapshot(page.buffer, `${snapshotPrefix}/page-${pageNum}`);
 
       expect(
         result.match,
@@ -159,7 +159,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
       await pdf2.close();
 
       // Compare the two renders
-      const { compareImages } = await import('./test-utils/image-comparison.js');
+      const { compareImages } = await import('../test-utils/image-comparison.js');
       const result = compareImages(page1.buffer, page2.buffer);
 
       expect(result.match).toBe(true);
@@ -180,7 +180,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
       await pdf2.close();
 
       // Compare the two renders
-      const { compareImages } = await import('./test-utils/image-comparison.js');
+      const { compareImages } = await import('../test-utils/image-comparison.js');
       const result = compareImages(page1.buffer, page2.buffer);
 
       expect(result.match).toBe(true);
@@ -201,7 +201,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
       await pdf2.close();
 
       // Compare the two renders
-      const { compareImages } = await import('./test-utils/image-comparison.js');
+      const { compareImages } = await import('../test-utils/image-comparison.js');
       const result = compareImages(page1.buffer, page2.buffer);
 
       expect(result.match).toBe(true);
