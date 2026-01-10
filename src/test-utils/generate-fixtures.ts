@@ -9,9 +9,11 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-const FIXTURES_DIR = path.join(import.meta.dirname, '../../fixtures/pdfs');
+const testUtilsDir: string = path.dirname(fileURLToPath(import.meta.url));
+const FIXTURES_DIR: string = path.join(testUtilsDir, '../../fixtures/pdfs');
 
 /**
  * Generates a simple text PDF.
@@ -134,7 +136,7 @@ async function generateGradientPdf(): Promise<Uint8Array> {
   return doc.save();
 }
 
-async function main() {
+async function main(): Promise<void> {
   // Ensure fixtures directory exists
   await fs.mkdir(FIXTURES_DIR, { recursive: true });
 

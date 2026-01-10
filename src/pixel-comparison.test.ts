@@ -11,6 +11,7 @@
  */
 
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { openPdf } from './index.js';
 import { cleanupDiffs, createSnapshotMatcher } from './test-utils/image-comparison.js';
@@ -29,13 +30,17 @@ try {
 const describeWithPdfium: typeof describe = pdfiumAvailable ? describe : describe.skip;
 
 // Path to test fixtures
-const FIXTURES_DIR = path.join(import.meta.dirname, '../fixtures/pdfs');
+const testDir: string = path.dirname(fileURLToPath(import.meta.url));
+const FIXTURES_DIR: string = path.join(testDir, '../fixtures/pdfs');
 
 // Create snapshot matcher
-const matchSnapshot = createSnapshotMatcher(import.meta.url, {
-  threshold: 0.1,
-  maxDiffPercentage: 0, // Exact match required
-});
+const matchSnapshot: ReturnType<typeof createSnapshotMatcher> = createSnapshotMatcher(
+  import.meta.url,
+  {
+    threshold: 0.1,
+    maxDiffPercentage: 0, // Exact match required
+  },
+);
 
 describeWithPdfium('Pixel Comparison Tests', () => {
   beforeAll(() => {
