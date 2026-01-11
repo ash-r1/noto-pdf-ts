@@ -1,24 +1,20 @@
 /**
  * Non-embedded font rendering tests.
  *
- * These tests verify the behavior when PDFs use fonts that are NOT embedded.
- * In PDFium WASM environment, system fonts are not accessible, so CJK characters
- * will NOT render correctly (they will be missing or show as empty space).
+ * These tests verify that PDFs with non-embedded fonts correctly throw
+ * MISSING_FONT errors. In PDFium WASM environment, system fonts are not
+ * accessible, so non-standard fonts cannot render correctly.
  *
- * This is a known limitation documented here:
- * - PDFium WASM cannot access system fonts
- * - CJK characters require embedded fonts to render correctly
- *
- * These tests serve as regression tests to document this behavior and
- * alert developers when PDFs with non-embedded fonts are encountered.
+ * The library now detects this condition and throws an error rather than
+ * producing blank/incorrect output.
  *
  * @module non-embedded-font.test
  */
 
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openPdf } from './index.js';
-import { cleanupDiffs, createSnapshotMatcher } from './test-utils/image-comparison.js';
+import { openPdf, PdfError } from './index.js';
+import { cleanupDiffs } from './test-utils/image-comparison.js';
 
 // Check if PDFium and sharp are available
 let pdfiumAvailable = false;
@@ -36,27 +32,26 @@ const describeWithPdfium: typeof describe = pdfiumAvailable ? describe : describ
 // Path to test fixtures
 const FIXTURES_DIR = path.join(import.meta.dirname, '../fixtures/pdfs/unicode-charts');
 
-// Create snapshot matcher
-const matchSnapshot = createSnapshotMatcher(import.meta.url, {
-  threshold: 0.1,
-  maxDiffPercentage: 1,
-});
-
 /**
- * Test a single PDF page and match against snapshot
+ * Test that a PDF with non-embedded fonts throws MISSING_FONT error
  */
-async function testPdfPage(pdfPath: string, snapshotName: string) {
+async function expectMissingFontError(pdfPath: string) {
   const pdf = await openPdf(pdfPath);
 
   try {
     expect(pdf.pageCount).toBeGreaterThan(0);
 
-    const page = await pdf.renderPage(1, { format: 'png', scale: 1.5 });
-    const result = matchSnapshot(page.buffer, snapshotName);
+    // Attempting to render should throw MISSING_FONT error
+    await expect(pdf.renderPage(1, { format: 'png', scale: 1.5 })).rejects.toThrow(PdfError);
 
-    expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
-
-    return page;
+    // Verify it's specifically a MISSING_FONT error
+    try {
+      await pdf.renderPage(1, { format: 'png', scale: 1.5 });
+    } catch (error) {
+      expect(error).toBeInstanceOf(PdfError);
+      expect((error as PdfError).code).toBe('MISSING_FONT');
+      expect((error as PdfError).message).toContain('fonts without embedded font data');
+    }
   } finally {
     await pdf.close();
   }
@@ -72,50 +67,50 @@ describeWithPdfium('Non-embedded Font Tests (CJK Tofu Issue)', () => {
   });
 
   describe('CJK Unified Ideographs (without embedded fonts)', () => {
-    it('cjk-unified-basic-nonembed.pdf - CJK basic characters (U+4E00-U+9FFF)', async () => {
+    it('cjk-unified-basic-nonembed.pdf - should throw MISSING_FONT error', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'cjk-unified-basic-nonembed.pdf');
-      await testPdfPage(pdfPath, 'nonembed-cjk-unified-basic');
+      await expectMissingFontError(pdfPath);
     });
 
-    it('cjk-ext-a-nonembed.pdf - CJK Extension A (U+3400-U+4DBF)', async () => {
+    it('cjk-ext-a-nonembed.pdf - should throw MISSING_FONT error', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'cjk-ext-a-nonembed.pdf');
-      await testPdfPage(pdfPath, 'nonembed-cjk-ext-a');
+      await expectMissingFontError(pdfPath);
     });
 
-    it('cjk-ext-b-nonembed.pdf - CJK Extension B (U+20000-U+2A6DF)', async () => {
+    it('cjk-ext-b-nonembed.pdf - should throw MISSING_FONT error', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'cjk-ext-b-nonembed.pdf');
-      await testPdfPage(pdfPath, 'nonembed-cjk-ext-b');
+      await expectMissingFontError(pdfPath);
     });
   });
 
   describe('Japanese Scripts (without embedded fonts)', () => {
-    it('hiragana-nonembed.pdf - Hiragana (U+3040-U+309F)', async () => {
+    it('hiragana-nonembed.pdf - should throw MISSING_FONT error', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'hiragana-nonembed.pdf');
-      await testPdfPage(pdfPath, 'nonembed-hiragana');
+      await expectMissingFontError(pdfPath);
     });
 
-    it('katakana-nonembed.pdf - Katakana (U+30A0-U+30FF)', async () => {
+    it('katakana-nonembed.pdf - should throw MISSING_FONT error', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'katakana-nonembed.pdf');
-      await testPdfPage(pdfPath, 'nonembed-katakana');
+      await expectMissingFontError(pdfPath);
     });
 
-    it('mixed-cjk-japanese-nonembed.pdf - Mixed Japanese content', async () => {
+    it('mixed-cjk-japanese-nonembed.pdf - should throw MISSING_FONT error', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'mixed-cjk-japanese-nonembed.pdf');
-      await testPdfPage(pdfPath, 'nonembed-mixed-japanese');
+      await expectMissingFontError(pdfPath);
     });
   });
 
   describe('Korean Scripts (without embedded fonts)', () => {
-    it('hangul-syllables-nonembed.pdf - Hangul Syllables (U+AC00-U+D7AF)', async () => {
+    it('hangul-syllables-nonembed.pdf - should throw MISSING_FONT error', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'hangul-syllables-nonembed.pdf');
-      await testPdfPage(pdfPath, 'nonembed-hangul-syllables');
+      await expectMissingFontError(pdfPath);
     });
   });
 
   describe('Chinese Scripts (without embedded fonts)', () => {
-    it('mixed-cjk-chinese-nonembed.pdf - Mixed Chinese content', async () => {
+    it('mixed-cjk-chinese-nonembed.pdf - should throw MISSING_FONT error', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'mixed-cjk-chinese-nonembed.pdf');
-      await testPdfPage(pdfPath, 'nonembed-mixed-chinese');
+      await expectMissingFontError(pdfPath);
     });
   });
 });
