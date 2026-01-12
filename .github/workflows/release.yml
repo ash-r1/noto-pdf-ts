@@ -40,11 +40,12 @@ jobs:
         with:
           version: pnpm version-packages
           publish: pnpm release
-          title: 'chore: release package'
-          commit: 'chore: release package'
+          title: 'chore: release package (alpha)'
+          commit: 'chore: release package (alpha)'
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create Git Tag
         if: steps.changesets.outputs.published == 'true'
