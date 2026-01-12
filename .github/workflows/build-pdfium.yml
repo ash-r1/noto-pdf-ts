@@ -2,16 +2,6 @@ name: Build PDFium WASM
 
 on:
   workflow_dispatch:
-    inputs:
-      variant:
-        description: 'WASM variant to build'
-        required: true
-        default: 'both'
-        type: choice
-        options:
-          - full
-          - lite
-          - both
   push:
     branches:
       - main
@@ -67,8 +57,7 @@ jobs:
             This PR updates the PDFium WASM build artifacts.
 
             ## Changes
-            - Updated `pdfium-full.js` and `pdfium-full.wasm` (with embedded CJK fonts)
-            - Updated `pdfium-lite.js` and `pdfium-lite.wasm` (without fonts)
+            - Updated `pdfium.js` and `pdfium.wasm`
             - Updated TypeScript type definitions
 
             ## Build Info

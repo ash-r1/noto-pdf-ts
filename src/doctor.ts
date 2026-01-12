@@ -108,9 +108,9 @@ function checkPdfiumFiles(): CheckResult {
     const wasmDir = path.join(import.meta.dirname, 'pdfium', 'wasm');
 
     // Check for placeholder vs actual WASM
-    const fullJsPath = path.join(wasmDir, 'pdfium-full.js');
-    if (fs.existsSync(fullJsPath)) {
-      const content = fs.readFileSync(fullJsPath, 'utf-8');
+    const pdfiumJsPath = path.join(wasmDir, 'pdfium.js');
+    if (fs.existsSync(pdfiumJsPath)) {
+      const content = fs.readFileSync(pdfiumJsPath, 'utf-8');
       const isPlaceholder = content.includes('not yet built');
 
       if (isPlaceholder) {

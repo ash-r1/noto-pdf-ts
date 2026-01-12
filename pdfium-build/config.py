@@ -1,19 +1,12 @@
 """
 PDFium WASM build configuration.
 
-This configuration supports two build variants:
-- Full: With Noto CJK fonts embedded (--embed-file)
-- Lite: Without fonts, FS API enabled for runtime font loading
-
-Both variants export the FS module for font management.
+Single WASM build without embedded fonts.
+Fonts are loaded via JS using the FS module at runtime.
 """
 
 # PDFium version to build
 PDFIUM_VERSION = "chromium/6721"
-
-# Font files to embed in the full build
-EMBED_FONTS_DIR = "/embed-fonts"
-EMBED_FONTS_TARGET = "/fonts"  # Target path in WASM virtual filesystem
 
 # Exported PDFium functions (minimal set for rendering)
 EXPORTED_FUNCTIONS = [
@@ -144,25 +137,17 @@ BASE_EMSCRIPTEN_FLAGS = [
 ]
 
 
-def get_build_config(variant: str) -> dict:
+def get_build_config() -> dict:
     """
-    Get build configuration for a specific variant.
-
-    Args:
-        variant: Either "full" or "lite"
+    Get build configuration for PDFium WASM.
 
     Returns:
         Dictionary with build configuration
     """
-    if variant not in ("full", "lite"):
-        raise ValueError(f"Unknown variant: {variant}")
-
     config = {
-        "variant": variant,
-        "output_name": f"pdfium-{variant}",
-        "export_name": f"loadPdfium{'Full' if variant == 'full' else 'Lite'}",
+        "output_name": "pdfium",
+        "export_name": "loadPdfium",
         "flags": BASE_EMSCRIPTEN_FLAGS.copy(),
-        "embed_fonts": variant == "full",
     }
 
     # Add export name
@@ -170,12 +155,6 @@ def get_build_config(variant: str) -> dict:
 
     # Add output file
     config["flags"].extend(["-o", f"{config['output_name']}.js"])
-
-    # Add font embedding for full variant
-    if config["embed_fonts"]:
-        config["flags"].extend([
-            "--embed-file", f"{EMBED_FONTS_DIR}@{EMBED_FONTS_TARGET}",
-        ])
 
     return config
 

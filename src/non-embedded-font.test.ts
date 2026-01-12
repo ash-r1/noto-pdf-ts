@@ -19,7 +19,7 @@ import { cleanupDiffs } from './test-utils/image-comparison.js';
 // Check if PDFium and sharp are available
 let pdfiumAvailable = false;
 try {
-  const { PDFiumLibrary } = await import('@hyzyla/pdfium');
+  const { PDFiumLibrary } = await import('./pdfium/index.js');
   await import('sharp');
   await PDFiumLibrary.init();
   pdfiumAvailable = true;
@@ -30,12 +30,12 @@ try {
 const describeWithPdfium: typeof describe = pdfiumAvailable ? describe : describe.skip;
 
 // Path to test fixtures
-const FIXTURES_DIR = path.join(import.meta.dirname, '../fixtures/pdfs/unicode-charts');
+const FIXTURES_DIR: string = path.join(import.meta.dirname, '../fixtures/pdfs/unicode-charts');
 
 /**
  * Test that a PDF with non-embedded fonts throws MISSING_FONT error
  */
-async function expectMissingFontError(pdfPath: string) {
+async function expectMissingFontError(pdfPath: string): Promise<void> {
   const pdf = await openPdf(pdfPath);
 
   try {

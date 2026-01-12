@@ -1,7 +1,6 @@
-# Dockerfile for building PDFium WASM with font support
-# Builds two variants:
-#   - pdfium-full.wasm: With Noto CJK fonts embedded
-#   - pdfium-lite.wasm: Without fonts (FS API enabled for runtime font loading)
+# Dockerfile for building PDFium WASM
+# Builds a single WASM module without embedded fonts.
+# Fonts are loaded via JS using the FS module at runtime.
 
 FROM ubuntu:22.04
 
@@ -37,17 +36,6 @@ RUN ./emsdk install 3.1.51 && \
 # Set up Emscripten environment
 ENV EMSDK=/opt/emsdk
 ENV PATH="/opt/emsdk:/opt/emsdk/upstream/emscripten:${PATH}"
-
-# Download Noto Sans CJK fonts for embedding
-WORKDIR /fonts
-RUN curl -L -o NotoSansCJK.zip \
-    "https://github.com/notofonts/noto-cjk/releases/download/Sans2.004/03_NotoSansCJK-OTC.zip" && \
-    unzip NotoSansCJK.zip -d /fonts/noto-cjk && \
-    rm NotoSansCJK.zip
-
-# Create font directory structure for PDFium
-RUN mkdir -p /embed-fonts && \
-    cp /fonts/noto-cjk/OTC/NotoSansCJK-Regular.ttc /embed-fonts/
 
 WORKDIR /build
 

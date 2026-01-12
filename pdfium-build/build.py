@@ -2,14 +2,11 @@
 """
 PDFium WASM build script.
 
-This script builds PDFium as WebAssembly modules with two variants:
-- pdfium-full.wasm: With Noto CJK fonts embedded
-- pdfium-lite.wasm: Without fonts (FS API enabled for runtime font loading)
-
-Both variants export the FS module for font management.
+This script builds PDFium as a single WebAssembly module without embedded fonts.
+Fonts are loaded via JS using the FS module at runtime.
 
 Usage:
-    python3 build.py [--skip-fetch] [--skip-build] [--output-dir DIR] [--variant full|lite|both]
+    python3 build.py [--skip-fetch] [--skip-build] [--output-dir DIR]
 """
 
 import argparse
@@ -108,14 +105,14 @@ def build_pdfium(pdfium_dir: Path, out_dir: Path):
     run_command(["ninja", "-C", str(out_dir), "pdfium"], cwd=pdfium_dir)
 
 
-def link_wasm(pdfium_dir: Path, out_dir: Path, output_dir: Path, variant: str):
+def link_wasm(pdfium_dir: Path, out_dir: Path, output_dir: Path):
     """Link PDFium into WASM module using Emscripten."""
-    print(f"Linking WASM module ({variant})...")
+    print("Linking WASM module...")
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Get build configuration for this variant
-    build_config = get_build_config(variant)
+    # Get build configuration
+    build_config = get_build_config()
 
     # Build exported functions flag
     exported_funcs = ",".join([f'"{f}"' for f in EXPORTED_FUNCTIONS])
@@ -270,15 +267,12 @@ export interface LoadPdfiumOptions {
   ) => WebAssembly.Exports;
 }
 
-/** Load PDFium Full variant (with embedded CJK fonts) */
-export declare function loadPdfiumFull(
+/** Load PDFium WASM module */
+declare function loadPdfium(
   options?: LoadPdfiumOptions
 ): Promise<PDFiumModule>;
 
-/** Load PDFium Lite variant (without fonts, FS enabled) */
-export declare function loadPdfiumLite(
-  options?: LoadPdfiumOptions
-): Promise<PDFiumModule>;
+export default loadPdfium;
 '''
     types_file = output_dir / "pdfium.d.ts"
     types_file.write_text(types_content)
@@ -293,12 +287,6 @@ def main():
     )
     parser.add_argument(
         "--skip-build", action="store_true", help="Skip building PDFium"
-    )
-    parser.add_argument(
-        "--variant",
-        choices=["full", "lite", "both"],
-        default="both",
-        help="Which variant to build (default: both)",
     )
     parser.add_argument(
         "--output-dir",
@@ -328,12 +316,8 @@ def main():
         configure_pdfium(pdfium_dir, out_dir)
         build_pdfium(pdfium_dir, out_dir)
 
-    # Determine which variants to build
-    variants = ["full", "lite"] if args.variant == "both" else [args.variant]
-
-    # Link WASM for each variant
-    for variant in variants:
-        link_wasm(pdfium_dir, out_dir, output_dir, variant)
+    # Link WASM
+    link_wasm(pdfium_dir, out_dir, output_dir)
 
     # Create TypeScript types
     create_types(output_dir)
