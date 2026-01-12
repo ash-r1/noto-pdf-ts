@@ -31,6 +31,113 @@ import { PdfError } from './types.js';
 let libraryInstance: PDFiumLibrary | null = null;
 
 /**
+ * PDF Base 14 fonts that don't require embedding.
+ * These are the standard fonts defined in PDF 1.0 specification.
+ * @internal
+ */
+const PDF_BASE_14_FONTS = new Set([
+  'Courier',
+  'Courier-Bold',
+  'Courier-BoldOblique',
+  'Courier-Oblique',
+  'Helvetica',
+  'Helvetica-Bold',
+  'Helvetica-BoldOblique',
+  'Helvetica-Oblique',
+  'Times-Roman',
+  'Times-Bold',
+  'Times-BoldItalic',
+  'Times-Italic',
+  'Symbol',
+  'ZapfDingbats',
+]);
+
+/**
+ * Checks if a font name is a PDF Base 14 font (standard font).
+ * @internal
+ */
+function isBase14Font(fontName: string): boolean {
+  // Remove subset prefix (e.g., "ABCDEF+Helvetica" -> "Helvetica")
+  const cleanName = fontName.replace(/^[A-Z]{6}\+/, '');
+  return PDF_BASE_14_FONTS.has(cleanName);
+}
+
+/**
+ * Checks if a font has a subset prefix, indicating it is embedded.
+ * Subset-embedded fonts have a 6-letter uppercase prefix followed by '+'.
+ * Example: "KZZGLW+ShinGo-Medium" indicates an embedded subset of ShinGo-Medium.
+ * @internal
+ */
+function hasSubsetPrefix(fontName: string): boolean {
+  return /^[A-Z]{6}\+/.test(fontName);
+}
+
+/**
+ * Detects non-embedded fonts in PDF data.
+ *
+ * This function analyzes the raw PDF bytes to find font definitions
+ * that don't have embedded font data (FontFile, FontFile2, or FontFile3).
+ *
+ * According to PDF specification:
+ * - PDF Base 14 fonts (Helvetica, Times-Roman, Courier, Symbol, ZapfDingbats)
+ *   don't require embedding as they are standard fonts.
+ * - All other fonts (TrueType, Type0/CIDFont, OpenType) require embedding
+ *   for correct rendering, especially in WASM environment.
+ *
+ * @param pdfData - Raw PDF data as Uint8Array
+ * @returns Array of font names that are not embedded (excluding Base 14 fonts)
+ * @internal
+ */
+function detectNonEmbeddedFonts(pdfData: Uint8Array): string[] {
+  const nonEmbeddedFonts: string[] = [];
+
+  try {
+    // Convert to string for regex matching (only works for ASCII parts)
+    const pdfString = new TextDecoder('latin1').decode(pdfData);
+
+    // Find all font types that require embedding:
+    // - CIDFontType0, CIDFontType2 (CJK and other complex scripts)
+    // - TrueType
+    // - Type0 (composite fonts)
+    const requiresEmbeddingPattern = /\/Subtype\s*\/(CIDFontType[02]|TrueType|Type0|OpenType)/g;
+    const hasNonStandardFonts = requiresEmbeddingPattern.test(pdfString);
+
+    if (!hasNonStandardFonts) {
+      return nonEmbeddedFonts;
+    }
+
+    // Find all font base font names
+    const baseFontPattern = /\/BaseFont\s*\/([^\s/>]+)/g;
+    let match: RegExpExecArray | null;
+    const allBaseFonts: string[] = [];
+
+    // biome-ignore lint/suspicious/noAssignInExpressions: Standard regex exec pattern
+    while ((match = baseFontPattern.exec(pdfString)) !== null) {
+      if (match[1]) {
+        allBaseFonts.push(match[1]);
+      }
+    }
+
+    // Filter out Base 14 fonts and fonts with subset prefixes (which are embedded)
+    // Subset-prefixed fonts (e.g., "KZZGLW+ShinGo-Medium") are always embedded,
+    // as the prefix is added when subsetting/embedding the font.
+    const nonEmbeddedCandidates = allBaseFonts.filter(
+      (name) => !(isBase14Font(name) || hasSubsetPrefix(name)),
+    );
+
+    // Non-embedded fonts are those that:
+    // 1. Are not Base 14 fonts (standard fonts that don't need embedding)
+    // 2. Don't have subset prefixes (which indicate embedding)
+    nonEmbeddedFonts.push(...nonEmbeddedCandidates);
+  } catch {
+    // If parsing fails, don't throw - just return empty array
+    // The rendering will proceed and may show other errors
+  }
+
+  return [...new Set(nonEmbeddedFonts)]; // Remove duplicates
+}
+
+/**
  * Gets or initializes the PDFium library instance.
  *
  * @returns Promise resolving to the PDFium library instance
@@ -59,19 +166,34 @@ export class PdfDocumentImpl implements PdfDocument {
   private document: PDFiumDocument;
 
   /**
+   * Raw PDF data for font detection.
+   * @internal
+   */
+  private pdfData: Uint8Array;
+
+  /**
    * Whether the document has been closed.
    * @internal
    */
   private closed = false;
 
   /**
+   * Cached non-embedded font detection result.
+   * @internal
+   */
+  private nonEmbeddedFontsChecked = false;
+  private nonEmbeddedFonts: string[] = [];
+
+  /**
    * Creates a new PdfDocumentImpl instance.
    *
    * @param document - The PDFium document
+   * @param pdfData - Raw PDF data for font detection
    * @internal
    */
-  private constructor(document: PDFiumDocument) {
+  private constructor(document: PDFiumDocument, pdfData: Uint8Array) {
     this.document = document;
+    this.pdfData = pdfData;
   }
 
   /**
@@ -96,7 +218,7 @@ export class PdfDocumentImpl implements PdfDocument {
 
     try {
       const document = await library.loadDocument(data, options.password);
-      return new PdfDocumentImpl(document);
+      return new PdfDocumentImpl(document, data);
     } catch (error) {
       throw wrapPdfiumError(error);
     }
@@ -252,6 +374,31 @@ export class PdfDocumentImpl implements PdfDocument {
   }
 
   /**
+   * Checks for non-embedded fonts and throws an error if found.
+   *
+   * This method is called before rendering to detect PDFs that will not
+   * render correctly due to missing font data.
+   *
+   * @throws {@link PdfError} with code `MISSING_FONT` if non-embedded fonts are detected
+   * @internal
+   */
+  private checkForNonEmbeddedFonts(): void {
+    if (!this.nonEmbeddedFontsChecked) {
+      this.nonEmbeddedFonts = detectNonEmbeddedFonts(this.pdfData);
+      this.nonEmbeddedFontsChecked = true;
+    }
+
+    if (this.nonEmbeddedFonts.length > 0) {
+      throw new PdfError(
+        `PDF contains fonts without embedded font data: ${this.nonEmbeddedFonts.join(', ')}. ` +
+          'Non-standard fonts (other than PDF Base 14 fonts) require embedding for correct rendering. ' +
+          'Please use a PDF with embedded fonts.',
+        'MISSING_FONT',
+      );
+    }
+  }
+
+  /**
    * Internal method to render a single page.
    *
    * This method handles the actual rendering using PDFium and sharp.
@@ -261,12 +408,16 @@ export class PdfDocumentImpl implements PdfDocument {
    * @param options - Rendering options
    * @returns Promise resolving to the rendered page
    * @throws {@link PdfError} with code `RENDER_FAILED` if rendering fails
+   * @throws {@link PdfError} with code `MISSING_FONT` if non-embedded fonts are detected
    * @internal
    */
   private async renderPageInternal(
     pageNumber: number,
     options: Omit<RenderOptions, 'pages'>,
   ): Promise<RenderedPage> {
+    // Check for non-embedded CJK fonts before rendering
+    this.checkForNonEmbeddedFonts();
+
     const scale = options.scale ?? DEFAULT_RENDER_OPTIONS.scale;
     const format = options.format ?? DEFAULT_RENDER_OPTIONS.format;
     const quality = options.quality ?? DEFAULT_RENDER_OPTIONS.quality;
