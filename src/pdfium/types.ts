@@ -91,12 +91,12 @@ export interface PDFiumModule {
   _FPDFText_CountChars(textPage: number): number;
   _FPDFText_GetText(textPage: number, startIndex: number, count: number, buffer: number): number;
 
-  // Emscripten utilities
-  setValue(ptr: number, value: number, type: string): void;
-  getValue(ptr: number, type: string): number;
-  UTF8ToString(ptr: number): string;
-  stringToUTF8(str: string, outPtr: number, maxBytes: number): void;
-  lengthBytesUTF8(str: string): number;
+  // Emscripten utilities (optional - may not be exported by all WASM builds)
+  setValue?(ptr: number, value: number, type: string): void;
+  getValue?(ptr: number, type: string): number;
+  UTF8ToString?(ptr: number): string;
+  stringToUTF8?(str: string, outPtr: number, maxBytes: number): void;
+  lengthBytesUTF8?(str: string): number;
 }
 
 /**

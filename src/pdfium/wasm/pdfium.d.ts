@@ -1,15 +1,13 @@
 /**
  * PDFium WASM module types.
+ * Source: paulocoutinhox/pdfium-lib v7623
  */
 
-import type { LoadPdfiumOptions, PDFiumModule } from '../types.js';
+import type { LoadPdfiumOptions, PDFiumModule as PDFiumModuleType } from '../types.js';
 
 /**
  * Load PDFium WASM module.
- *
- * @param options - Optional configuration for loading the module
- * @returns Promise resolving to the PDFium module
  */
-declare function loadPdfium(options?: LoadPdfiumOptions): Promise<PDFiumModule>;
+declare function loadPdfiumModule(options?: LoadPdfiumOptions): Promise<PDFiumModuleType>;
 
-export default loadPdfium;
+export default loadPdfiumModule;

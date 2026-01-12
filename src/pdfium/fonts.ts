@@ -46,12 +46,15 @@ function ensureDirectory(fs: EmscriptenFS, path: string): void {
       }
     } catch (error) {
       // Directory doesn't exist, create it
-      if (
+      // Handle various Emscripten FS error formats
+      const isNotFoundError =
         error instanceof Error &&
-        (error.message.includes('no such file') ||
+        (error.message.toLowerCase().includes('no such file') ||
           error.message.includes('ENOENT') ||
-          error.message.includes('FS error'))
-      ) {
+          error.message.includes('FS error') ||
+          (error as { code?: string }).code === 'ENOENT' ||
+          (error as { errno?: number }).errno === 44);
+      if (isNotFoundError) {
         try {
           fs.mkdir(currentPath);
         } catch (mkdirError) {

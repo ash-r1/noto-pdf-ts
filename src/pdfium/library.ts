@@ -10,6 +10,7 @@
 import { DEFAULT_FONT_DIR, PDFIUM_FONT_PATHS, registerFonts } from './fonts.js';
 import type { FontConfig, PDFiumModule } from './types.js';
 import { FPDFBitmap, FPDFErrorCode } from './types.js';
+import { lengthBytesUTF8, stringToUTF8 } from './wasm-utils.js';
 
 /**
  * Bytes per pixel for BGRA format.
@@ -157,9 +158,9 @@ export class PDFiumLibrary {
 
     for (let i = 0; i < paths.length; i++) {
       const path = paths[i] as string;
-      const pathBytes = module.lengthBytesUTF8(path) + 1;
+      const pathBytes = lengthBytesUTF8(path) + 1;
       const pathPtr = wasmExports.malloc(pathBytes);
-      module.stringToUTF8(path, pathPtr, pathBytes);
+      stringToUTF8(module.HEAPU8, path, pathPtr, pathBytes);
       HEAP32[(arrayPtr >> 2) + i] = pathPtr;
     }
 
@@ -178,18 +179,19 @@ export class PDFiumLibrary {
    */
   public loadDocument(data: Uint8Array, password?: string): PDFiumDocument {
     const { module } = this;
-    const { wasmExports, HEAPU8 } = module;
+    const { wasmExports } = module;
 
     // Allocate memory for PDF data
     const dataPtr = wasmExports.malloc(data.length);
-    HEAPU8.set(data, dataPtr);
+    // Access HEAPU8 fresh after malloc as memory may have grown
+    module.HEAPU8.set(data, dataPtr);
 
     // Allocate memory for password if provided
     let passwordPtr = 0;
     if (password) {
-      const passwordBytes = module.lengthBytesUTF8(password) + 1;
+      const passwordBytes = lengthBytesUTF8(password) + 1;
       passwordPtr = wasmExports.malloc(passwordBytes);
-      module.stringToUTF8(password, passwordPtr, passwordBytes);
+      stringToUTF8(module.HEAPU8, password, passwordPtr, passwordBytes);
     }
 
     // Load document
@@ -346,7 +348,7 @@ export class PDFiumPage {
     const bufferSize = stride * height;
 
     const { module } = this;
-    const { wasmExports, HEAPU8 } = module;
+    const { wasmExports } = module;
 
     // Allocate buffer
     const bufferPtr = wasmExports.malloc(bufferSize);
@@ -369,9 +371,9 @@ export class PDFiumPage {
       0, // flags
     );
 
-    // Copy data
+    // Copy data - access HEAPU8 fresh here as WASM memory may have grown during rendering
     const data = new Uint8Array(bufferSize);
-    data.set(HEAPU8.subarray(bufferPtr, bufferPtr + bufferSize));
+    data.set(module.HEAPU8.subarray(bufferPtr, bufferPtr + bufferSize));
 
     // Cleanup
     module._FPDFBitmap_Destroy(bitmap);
