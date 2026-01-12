@@ -10,7 +10,7 @@ A simple and efficient PDF conversion library for Node.js. Convert PDF pages to 
 - Memory efficient - Process one page at a time using AsyncGenerator
 - Japanese/CJK font support - Automatic CMap detection from pdfjs-dist
 - Full TypeScript support - Includes type definitions
-- ESM / CommonJS compatible
+- ESM only (CommonJS is not supported)
 - `await using` syntax support (ES2024 AsyncDisposable)
 
 ## Installation

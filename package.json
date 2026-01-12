@@ -3,7 +3,6 @@
   "version": "0.0.1-alpha.0",
   "description": "PDF conversion library for Node.js",
   "type": "module",
-  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
@@ -12,18 +11,15 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     },
     "./lite": {
       "types": "./dist/lite.d.ts",
-      "import": "./dist/lite.js",
-      "require": "./dist/lite.cjs"
+      "import": "./dist/lite.js"
     },
     "./fonts/noto-cjk": {
       "types": "./dist/fonts/noto-cjk.d.ts",
-      "import": "./dist/fonts/noto-cjk.js",
-      "require": "./dist/fonts/noto-cjk.cjs"
+      "import": "./dist/fonts/noto-cjk.js"
     }
   },
   "sideEffects": false,

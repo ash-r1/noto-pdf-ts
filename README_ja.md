@@ -8,7 +8,7 @@ Node.js 向けのシンプルで効率的な PDF 変換ライブラリです。P
 - メモリ効率 - AsyncGenerator を使用した1ページずつの処理
 - 日本語・CJK フォント対応 - pdfjs-dist の CMap を自動検出
 - TypeScript 完全対応 - 型定義付き
-- ESM / CommonJS 両対応
+- ESM のみ対応（CommonJS は非サポート）
 - `await using` 構文対応（ES2024 AsyncDisposable）
 
 ## インストール
