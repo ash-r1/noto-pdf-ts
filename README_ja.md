@@ -13,8 +13,11 @@ Node.js 向けのシンプルで効率的な PDF 変換ライブラリです。P
 
 ## インストール
 
+> **注意:** このパッケージは現在 alpha 版です。APIは将来のリリースで変更される可能性があります。
+
 ```bash
-npm install noto-pdf-ts
+# 最新の alpha 版をインストール
+npm install noto-pdf-ts@alpha
 ```
 
 ### 必須依存

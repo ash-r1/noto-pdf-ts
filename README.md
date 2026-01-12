@@ -15,8 +15,11 @@ A simple and efficient PDF conversion library for Node.js. Convert PDF pages to 
 
 ## Installation
 
+> **Note:** This package is currently in alpha. The API may change in future releases.
+
 ```bash
-npm install noto-pdf-ts
+# Install the latest alpha version
+npm install noto-pdf-ts@alpha
 ```
 
 ### Required Dependencies
