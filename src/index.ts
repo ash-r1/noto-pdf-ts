@@ -1,12 +1,12 @@
 /**
- * pdf-simple - PDF conversion library for Node.js
+ * noto-pdf-ts - PDF conversion library for Node.js
  *
  * A simple, memory-efficient library for converting PDF pages to images.
  * Supports Japanese and CJK fonts out of the box.
  *
  * @example
  * ```typescript
- * import { openPdf } from 'pdf-simple'
+ * import { openPdf } from 'noto-pdf-ts'
  *
  * // Open a PDF file
  * const pdf = await openPdf('/path/to/document.pdf')
@@ -98,7 +98,7 @@ export async function openPdf(input: PdfInput, options?: PdfOpenOptions): Promis
  *
  * @example
  * ```typescript
- * import { renderPdfPages } from 'pdf-simple'
+ * import { renderPdfPages } from 'noto-pdf-ts'
  *
  * for await (const page of renderPdfPages('/path/to/document.pdf', { scale: 2 })) {
  *   console.log(`Page ${page.pageNumber}: ${page.width}x${page.height}`)

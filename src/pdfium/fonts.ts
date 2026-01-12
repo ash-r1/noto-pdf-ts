@@ -82,7 +82,7 @@ function ensureDirectory(fs: EmscriptenFS, path: string): void {
  *
  * @example
  * ```typescript
- * import { registerFonts } from 'pdf-simple/lite';
+ * import { registerFonts } from 'noto-pdf-ts/lite';
  *
  * const fontData = await fs.readFile('NotoSansCJK-Regular.ttc');
  * registerFonts(module, [

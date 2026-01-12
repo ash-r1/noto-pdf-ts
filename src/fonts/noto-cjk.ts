@@ -2,12 +2,12 @@
  * Noto Sans CJK font loader.
  *
  * This module provides utilities for loading Noto Sans CJK fonts
- * for use with the pdf-simple/lite variant.
+ * for use with the noto-pdf-ts/lite variant.
  *
  * @example
  * ```typescript
- * import { openPdf, registerFonts } from 'pdf-simple/lite'
- * import { loadNotoCJKFont, NOTO_CJK_FONT_URL } from 'pdf-simple/fonts/noto-cjk'
+ * import { openPdf, registerFonts } from 'noto-pdf-ts/lite'
+ * import { loadNotoCJKFont, NOTO_CJK_FONT_URL } from 'noto-pdf-ts/fonts/noto-cjk'
  *
  * // Load font from CDN
  * const fontData = await loadNotoCJKFont()
@@ -45,8 +45,8 @@ export const NOTO_CJK_FONT_NAME = 'NotoSansCJK-Regular.ttc';
  *
  * @example
  * ```typescript
- * import { loadNotoCJKFont } from 'pdf-simple/fonts/noto-cjk'
- * import { registerFonts } from 'pdf-simple/lite'
+ * import { loadNotoCJKFont } from 'noto-pdf-ts/fonts/noto-cjk'
+ * import { registerFonts } from 'noto-pdf-ts/lite'
  *
  * const fontData = await loadNotoCJKFont()
  * registerFonts([{ name: 'NotoSansCJK-Regular.ttc', data: fontData }])
@@ -191,8 +191,8 @@ async function decompressDeflate(data: Uint8Array): Promise<Uint8Array> {
  *
  * @example
  * ```typescript
- * import { loadNotoCJKFontFromFile } from 'pdf-simple/fonts/noto-cjk'
- * import { registerFonts } from 'pdf-simple/lite'
+ * import { loadNotoCJKFontFromFile } from 'noto-pdf-ts/fonts/noto-cjk'
+ * import { registerFonts } from 'noto-pdf-ts/lite'
  *
  * const fontData = await loadNotoCJKFontFromFile('/path/to/NotoSansCJK-Regular.ttc')
  * registerFonts([{ name: 'NotoSansCJK-Regular.ttc', data: fontData }])

@@ -1,7 +1,7 @@
 /**
- * Type definitions for pdf-simple
+ * Type definitions for noto-pdf-ts
  *
- * This module exports all public types used by the pdf-simple library.
+ * This module exports all public types used by the noto-pdf-ts library.
  *
  * @module types
  */
@@ -425,12 +425,12 @@ export interface PdfDocument extends AsyncDisposable {
 /**
  * Error thrown when PDF operations fail.
  *
- * All errors from pdf-simple are instances of this class,
+ * All errors from noto-pdf-ts are instances of this class,
  * with a specific {@link PdfErrorCode} to identify the type of error.
  *
  * @example
  * ```typescript
- * import { openPdf, PdfError } from 'pdf-simple'
+ * import { openPdf, PdfError } from 'noto-pdf-ts'
  *
  * try {
  *   const pdf = await openPdf('/path/to/encrypted.pdf')
@@ -488,7 +488,7 @@ export class PdfError extends Error {
  *
  * @example
  * ```typescript
- * import { PdfError, type PdfErrorCode } from 'pdf-simple'
+ * import { PdfError, type PdfErrorCode } from 'noto-pdf-ts'
  *
  * function handleError(code: PdfErrorCode): string {
  *   switch (code) {

@@ -5,17 +5,17 @@ import starlightTypeDoc, { typeDocSidebarGroup } from 'starlight-typedoc';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://ash-r1.github.io/pdf-simple',
-  base: '/pdf-simple',
+  site: 'https://ash-r1.github.io/noto-pdf-ts',
+  base: '/noto-pdf-ts',
   integrations: [
     starlight({
-      title: 'pdf-simple',
+      title: 'noto-pdf-ts',
       description: 'PDF conversion library for Node.js',
       social: {
-        github: 'https://github.com/ash-r1/pdf-simple',
+        github: 'https://github.com/ash-r1/noto-pdf-ts',
       },
       editLink: {
-        baseUrl: 'https://github.com/ash-r1/pdf-simple/edit/main/website/',
+        baseUrl: 'https://github.com/ash-r1/noto-pdf-ts/edit/main/website/',
       },
       defaultLocale: 'root',
       locales: {

@@ -1,5 +1,5 @@
 {
-  "name": "pdf-simple",
+  "name": "noto-pdf-ts",
   "version": "0.0.1",
   "description": "PDF conversion library for Node.js",
   "type": "module",
@@ -7,7 +7,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "pdf-simple": "./dist/cli.js"
+    "noto-pdf-ts": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -88,12 +88,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ash-r1/pdf-simple.git"
+    "url": "git+https://github.com/ash-r1/noto-pdf-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/ash-r1/pdf-simple/issues"
+    "url": "https://github.com/ash-r1/noto-pdf-ts/issues"
   },
-  "homepage": "https://github.com/ash-r1/pdf-simple",
+  "homepage": "https://github.com/ash-r1/noto-pdf-ts",
   "lint-staged": {
     "src/**/*.ts": [
       "biome check --write --no-errors-on-unmatched"

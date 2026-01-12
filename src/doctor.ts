@@ -1,5 +1,5 @@
 /**
- * Doctor module for checking pdf-simple dependencies and configuration.
+ * Doctor module for checking noto-pdf-ts dependencies and configuration.
  *
  * This module provides diagnostic checks to verify that all required
  * dependencies (PDFium WASM, sharp) are properly installed and configured.
@@ -337,7 +337,7 @@ async function checkPdfRendering(pdfiumOk: boolean, sharpOk: boolean): Promise<C
  *
  * @example
  * ```typescript
- * import { runDoctor } from 'pdf-simple/doctor'
+ * import { runDoctor } from 'noto-pdf-ts/doctor'
  *
  * const result = await runDoctor()
  * if (result.ok) {
@@ -387,7 +387,7 @@ export async function runDoctor(): Promise<DoctorResult> {
 export function formatDoctorResult(result: DoctorResult): string {
   const lines: string[] = [];
 
-  lines.push('pdf-simple doctor');
+  lines.push('noto-pdf-ts doctor');
   lines.push('=================');
   lines.push('');
 
@@ -410,7 +410,7 @@ export function formatDoctorResult(result: DoctorResult): string {
 
   lines.push('');
   if (result.ok) {
-    lines.push('\x1b[32mAll checks passed! pdf-simple is ready to use.\x1b[0m');
+    lines.push('\x1b[32mAll checks passed! noto-pdf-ts is ready to use.\x1b[0m');
   } else {
     const failedCount = result.checks.filter((c) => !c.ok).length;
     lines.push(`\x1b[31m${failedCount} check(s) failed. Please fix the issues above.\x1b[0m`);
