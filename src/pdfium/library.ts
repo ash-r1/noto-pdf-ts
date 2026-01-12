@@ -31,6 +31,8 @@ type LoadPdfiumFn = (options?: { locateFile?: (path: string) => string }) => Pro
 export class PDFiumLibrary {
   private readonly module: PDFiumModule;
   private initialized = false;
+  /** Pointers to font path strings that need to be freed on destroy */
+  private fontPathPtrs: number[] = [];
 
   private constructor(module: PDFiumModule) {
     this.module = module;
@@ -146,6 +148,9 @@ export class PDFiumLibrary {
   /**
    * Creates a null-terminated array of font path strings in WASM memory.
    *
+   * Allocates memory for the array and each string, storing pointers
+   * for cleanup in destroy().
+   *
    * @param paths - Array of font search paths
    * @returns Pointer to the array
    */
@@ -155,11 +160,13 @@ export class PDFiumLibrary {
 
     // Allocate array of pointers (paths.length + 1 for null terminator)
     const arrayPtr = wasmExports.malloc((paths.length + 1) * 4);
+    this.fontPathPtrs.push(arrayPtr);
 
     for (let i = 0; i < paths.length; i++) {
       const path = paths[i] as string;
       const pathBytes = lengthBytesUTF8(path) + 1;
       const pathPtr = wasmExports.malloc(pathBytes);
+      this.fontPathPtrs.push(pathPtr);
       stringToUTF8(module.HEAPU8, path, pathPtr, pathBytes);
       HEAP32[(arrayPtr >> 2) + i] = pathPtr;
     }
@@ -234,6 +241,14 @@ export class PDFiumLibrary {
   public destroy(): void {
     if (this.initialized && this.module) {
       this.module._FPDF_DestroyLibrary();
+
+      // Free font path memory allocated in createFontPathsArray
+      const { wasmExports } = this.module;
+      for (const ptr of this.fontPathPtrs) {
+        wasmExports.free(ptr);
+      }
+      this.fontPathPtrs = [];
+
       this.initialized = false;
     }
   }

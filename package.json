@@ -32,8 +32,8 @@
   },
   "packageManager": "pnpm@10.26.2",
   "scripts": {
-    "build": "tsup && npm run copy-assets",
-    "copy-assets": "node -e \"const fs=require('fs');const path=require('path');fs.mkdirSync('dist/pdfium/fonts',{recursive:true});fs.mkdirSync('dist/pdfium/wasm',{recursive:true});fs.readdirSync('src/pdfium/fonts').forEach(f=>fs.copyFileSync(path.join('src/pdfium/fonts',f),path.join('dist/pdfium/fonts',f)));fs.readdirSync('src/pdfium/wasm').forEach(f=>fs.copyFileSync(path.join('src/pdfium/wasm',f),path.join('dist/pdfium/wasm',f)));\"",
+    "build": "tsup && pnpm run copy-assets",
+    "copy-assets": "node scripts/copy-assets.js",
     "test": "vitest",
     "test:ci": "vitest run",
     "lint": "biome lint src",

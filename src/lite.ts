@@ -2,19 +2,43 @@
  * pdf-simple/lite - Lightweight PDF conversion library for Node.js
  *
  * This is the lightweight variant that does not include embedded CJK fonts.
- * For CJK font support, use registerFonts() to add fonts manually:
+ * For CJK font support, use the PDFiumLibrary API with registerFonts():
  *
  * @example
  * ```typescript
- * import { openPdf, registerFonts } from 'pdf-simple/lite'
+ * import { PDFiumLibrary } from 'pdf-simple/lite'
  * import { loadNotoCJKFont } from 'pdf-simple/fonts/noto-cjk'
  *
- * // Load and register CJK fonts (only if needed)
- * const fontData = await loadNotoCJKFont()
- * registerFonts([{ name: 'NotoSansCJK.ttc', data: fontData }])
+ * // Initialize PDFium library (lite variant)
+ * const library = await PDFiumLibrary.initLite()
  *
- * // Now render PDFs with CJK support
+ * // Load and register CJK fonts
+ * const fontData = await loadNotoCJKFont()
+ * library.registerFonts([{ name: 'NotoSansCJK-Regular.ttc', data: fontData }])
+ *
+ * // Load and render PDF with CJK support
+ * const pdfData = await fs.readFile('/path/to/document.pdf')
+ * const document = library.loadDocument(new Uint8Array(pdfData))
+ * const page = document.getPage(0)
+ * const image = page.render({ scale: 2.0 })
+ *
+ * // Cleanup
+ * page.close()
+ * document.destroy()
+ * library.destroy()
+ * ```
+ *
+ * For simpler use cases without custom fonts, use the openPdf() convenience function:
+ *
+ * @example
+ * ```typescript
+ * import { openPdf } from 'pdf-simple/lite'
+ *
  * const pdf = await openPdf('/path/to/document.pdf')
+ * for await (const page of pdf.renderPages({ format: 'png' })) {
+ *   await fs.writeFile(`page-${page.pageNumber}.png`, page.buffer)
+ * }
+ * await pdf.close()
  * ```
  *
  * @packageDocumentation
@@ -38,6 +62,8 @@ export {
   registerFonts,
   unregisterFont,
 } from './pdfium/fonts.js';
+// Re-export PDFium library for advanced use cases
+export { PDFiumLibrary } from './pdfium/library.js';
 export type { FontConfig } from './pdfium/types.js';
 // Re-export types
 export type {

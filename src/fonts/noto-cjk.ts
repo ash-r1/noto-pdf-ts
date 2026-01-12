@@ -73,7 +73,14 @@ export async function loadNotoCJKFont(url?: string): Promise<Uint8Array> {
 }
 
 /**
+ * ZIP local file header signature.
+ */
+const ZIP_LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50;
+
+/**
  * Extracts the Noto Sans CJK font from a ZIP archive.
+ *
+ * Uses structured parsing of ZIP headers instead of byte-by-byte search.
  *
  * @param zipData - ZIP file data
  * @returns Font data as Uint8Array
@@ -84,27 +91,29 @@ async function extractFontFromZip(zipData: Uint8Array): Promise<Uint8Array> {
   // OTC/NotoSansCJK-Regular.ttc
 
   const targetFileName = 'NotoSansCJK-Regular.ttc';
-
-  // Find the local file header for our target file
-  const dataView = new DataView(zipData.buffer);
+  const dataView = new DataView(zipData.buffer, zipData.byteOffset, zipData.byteLength);
   let offset = 0;
 
-  while (offset < zipData.length - 4) {
-    // Look for local file header signature (0x04034b50)
+  // ZIP files start with local file headers (PK\x03\x04)
+  // Parse each header and jump to next, rather than byte-by-byte search
+  while (offset < zipData.length - 30) {
+    // Minimum header size is 30 bytes
     const signature = dataView.getUint32(offset, true);
-    if (signature !== 0x04034b50) {
-      offset++;
-      continue;
+
+    // Check for local file header signature
+    if (signature !== ZIP_LOCAL_FILE_HEADER_SIGNATURE) {
+      // Not a local file header - could be central directory or end of entries
+      break;
     }
 
-    // Read local file header
+    // Read local file header fields
+    const compressionMethod = dataView.getUint16(offset + 8, true);
+    const compressedSize = dataView.getUint32(offset + 18, true);
     const fileNameLength = dataView.getUint16(offset + 26, true);
     const extraFieldLength = dataView.getUint16(offset + 28, true);
-    const compressedSize = dataView.getUint32(offset + 18, true);
-    const compressionMethod = dataView.getUint16(offset + 8, true);
 
     const fileNameStart = offset + 30;
-    const fileNameBytes = zipData.slice(fileNameStart, fileNameStart + fileNameLength);
+    const fileNameBytes = zipData.subarray(fileNameStart, fileNameStart + fileNameLength);
     const fileName = new TextDecoder().decode(fileNameBytes);
 
     const dataStart = fileNameStart + fileNameLength + extraFieldLength;
@@ -113,17 +122,17 @@ async function extractFontFromZip(zipData: Uint8Array): Promise<Uint8Array> {
       // Found our target file
       if (compressionMethod === 0) {
         // Stored (no compression)
-        return zipData.slice(dataStart, dataStart + compressedSize);
+        return zipData.subarray(dataStart, dataStart + compressedSize);
       }
       if (compressionMethod === 8) {
         // Deflate compression - need to decompress
-        const compressedData = zipData.slice(dataStart, dataStart + compressedSize);
+        const compressedData = zipData.subarray(dataStart, dataStart + compressedSize);
         return await decompressDeflate(compressedData);
       }
       throw new Error(`Unsupported compression method: ${compressionMethod}`);
     }
 
-    // Move to next file
+    // Jump directly to next file header (no byte-by-byte search)
     offset = dataStart + compressedSize;
   }
 

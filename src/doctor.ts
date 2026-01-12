@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Gets a require function that works in both ESM and CJS environments.
@@ -105,7 +106,9 @@ function checkNodeVersion(): CheckResult {
 function checkPdfiumFiles(): CheckResult {
   try {
     // Check if the WASM loader files exist
-    const wasmDir = path.join(import.meta.dirname, 'pdfium', 'wasm');
+    // Use fileURLToPath for Node.js 20.0.0+ compatibility (import.meta.dirname requires 20.11.0+)
+    const currentDir = path.dirname(fileURLToPath(import.meta.url));
+    const wasmDir = path.join(currentDir, 'pdfium', 'wasm');
 
     // Check for placeholder vs actual WASM
     const pdfiumJsPath = path.join(wasmDir, 'pdfium.js');
