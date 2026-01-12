@@ -7,7 +7,7 @@
  * @module pdfium/wasm-utils
  */
 
-const encoder: TextEncoder = new TextEncoder();
+const encoder: InstanceType<typeof TextEncoder> = new TextEncoder();
 
 /**
  * Returns the number of bytes needed to store a UTF8 string (excluding null terminator).
