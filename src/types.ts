@@ -445,6 +445,7 @@ export class PdfError extends Error {
  * | `INVALID_PAGE_NUMBER` | The page number is out of range (less than 1 or greater than pageCount) |
  * | `RENDER_FAILED` | Failed to render a page to an image |
  * | `DOCUMENT_CLOSED` | Attempted to use a document after it was closed |
+ * | `MISSING_FONT` | Font is not embedded and cannot be rendered correctly |
  * | `UNKNOWN` | An unexpected error occurred |
  *
  * @example
@@ -482,5 +483,7 @@ export type PdfErrorCode =
   | 'RENDER_FAILED'
   /** Attempted to use a document after it was closed */
   | 'DOCUMENT_CLOSED'
+  /** Font is not embedded and cannot be rendered correctly */
+  | 'MISSING_FONT'
   /** An unexpected error occurred */
   | 'UNKNOWN';
