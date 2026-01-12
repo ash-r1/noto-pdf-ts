@@ -1,10 +1,10 @@
 /**
- * PDFium Full WASM loader.
+ * PDFium WASM loader with Noto CJK fonts.
  *
  * This module loads PDFium WASM and automatically registers Noto CJK fonts
  * for rendering PDFs that don't have embedded fonts.
  *
- * @module pdfium/wasm-full
+ * @module pdfium/wasm-with-noto
  */
 
 import fs from 'node:fs/promises';
@@ -24,15 +24,15 @@ const NOTO_CJK_FONT_PATH: string = path.join(
 );
 
 /**
- * Loads the PDFium Full WASM module with CJK font support.
+ * Loads the PDFium WASM module with Noto CJK font support.
  *
- * The full variant automatically loads and registers Noto CJK fonts
- * for proper rendering of CJK characters in PDFs without embedded fonts.
+ * Automatically loads and registers Noto CJK fonts for proper rendering
+ * of CJK characters in PDFs without embedded fonts.
  *
  * @param options - Optional configuration
  * @returns Promise resolving to the PDFium module
  */
-export async function loadPdfiumFull(options?: LoadPdfiumOptions): Promise<PDFiumModule> {
+export async function loadPdfiumWithNoto(options?: LoadPdfiumOptions): Promise<PDFiumModule> {
   const module = await loadPdfiumModule(options);
 
   // Load and register Noto CJK font

@@ -2,7 +2,7 @@
  * PDFium library wrapper.
  *
  * This module provides the core PDFium library management,
- * including initialization with different variants (full/lite).
+ * including initialization with or without bundled fonts.
  *
  * @module pdfium/library
  */
@@ -48,25 +48,22 @@ export class PDFiumLibrary {
   }
 
   /**
-   * Initializes the PDFium library with the full variant.
+   * Initializes the PDFium library with Noto CJK fonts.
    *
-   * The full variant includes embedded Noto CJK fonts for
+   * Automatically loads and registers Noto CJK fonts for
    * rendering PDFs without embedded fonts.
    *
    * @returns Promise resolving to a PDFiumLibrary instance
    */
   public static async init(): Promise<PDFiumLibrary> {
-    // Dynamic import of full variant WASM loader
-    // This will be replaced with actual import once WASM is built
-    const { loadPdfiumFull } = await import('./wasm-full.js');
-    return PDFiumLibrary.initWithLoader(loadPdfiumFull);
+    const { loadPdfiumWithNoto } = await import('./wasm-with-noto.js');
+    return PDFiumLibrary.initWithLoader(loadPdfiumWithNoto);
   }
 
   /**
-   * Initializes the PDFium library with the lite variant.
+   * Initializes the PDFium library without bundled fonts.
    *
-   * The lite variant does not include fonts. Use `registerFonts()`
-   * to add fonts manually if needed.
+   * Use `registerFonts()` to add fonts manually if needed.
    *
    * @returns Promise resolving to a PDFiumLibrary instance
    */
