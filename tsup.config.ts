@@ -7,7 +7,7 @@ export default defineConfig({
     'fonts/noto-cjk': 'src/fonts/noto-cjk.ts',
     cli: 'src/cli.ts',
   },
-  format: ['esm', 'cjs'],
+  format: ['esm'],
   dts: true,
   splitting: false,
   sourcemap: true,
