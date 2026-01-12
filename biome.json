@@ -157,5 +157,17 @@
   },
   "files": {
     "includes": ["src/**/*.ts"]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/pdfium/types.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useNamingConvention": "off"
+          }
+        }
+      }
+    }
+  ]
 }

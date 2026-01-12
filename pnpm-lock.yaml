@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@hyzyla/pdfium':
-        specifier: ^2.1.9
-        version: 2.1.9
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
@@ -474,9 +471,6 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
-
-  '@hyzyla/pdfium@2.1.9':
-    resolution: {integrity: sha512-c2T59buVQjjsqkuxjcUMQqy+M8CssAnK856ZBnzcy2KOauHSgJUOZIcsrXUR0poIh4RK9FYKD7PbyqjodooxUg==}
 
   '@img/colour@1.0.0':
     resolution: {integrity: sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw==}
@@ -1982,8 +1976,6 @@ snapshots:
 
   '@esbuild/win32-x64@0.27.2':
     optional: true
-
-  '@hyzyla/pdfium@2.1.9': {}
 
   '@img/colour@1.0.0': {}
 

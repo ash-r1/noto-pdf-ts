@@ -14,14 +14,26 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./lite": {
+      "types": "./dist/lite.d.ts",
+      "import": "./dist/lite.js",
+      "require": "./dist/lite.cjs"
+    },
+    "./fonts/noto-cjk": {
+      "types": "./dist/fonts/noto-cjk.d.ts",
+      "import": "./dist/fonts/noto-cjk.js",
+      "require": "./dist/fonts/noto-cjk.cjs"
     }
   },
+  "sideEffects": false,
   "engines": {
     "node": ">=20.0.0"
   },
   "packageManager": "pnpm@10.26.2",
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && pnpm run copy-assets",
+    "copy-assets": "node scripts/copy-assets.js",
     "test": "vitest",
     "test:ci": "vitest run",
     "lint": "biome lint src",
@@ -91,7 +103,6 @@
     "onlyBuiltDependencies": []
   },
   "dependencies": {
-    "@hyzyla/pdfium": "^2.1.9",
     "sharp": "^0.34.5"
   }
 }
