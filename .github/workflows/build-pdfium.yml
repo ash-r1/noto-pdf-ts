@@ -13,9 +13,12 @@ on:
           - lite
           - both
   push:
-    branches: [main]
+    branches:
+      - main
+      - claude/fix-cjk-pdf-rendering-TlCNR  # TODO: Remove after WASM build
     paths:
       - 'pdfium-build/**'
+      - '.github/workflows/build-pdfium.yml'
 
 jobs:
   build:
