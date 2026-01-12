@@ -3,7 +3,7 @@ title: はじめに
 description: Node.js向けのシンプルで効率的なPDF画像変換ライブラリ
 ---
 
-**pdf-simple** は、Node.js向けの軽量なPDF→画像変換ライブラリです。
+**noto-pdf-ts** は、Node.js向けの軽量なPDF→画像変換ライブラリです。
 
 ## 特徴
 
@@ -16,12 +16,12 @@ description: Node.js向けのシンプルで効率的なPDF画像変換ライブ
 ## インストール
 
 ```bash
-npm install pdf-simple
+npm install noto-pdf-ts
 ```
 
 ### Canvas依存関係
 
-pdf-simpleはレンダリングに`canvas`パッケージを必要とします。オプショナルな依存関係として含まれています：
+noto-pdf-tsはレンダリングに`canvas`パッケージを必要とします。オプショナルな依存関係として含まれています：
 
 ```bash
 # canvasが自動的にインストールされない場合
@@ -31,7 +31,7 @@ npm install canvas
 ## クイック例
 
 ```typescript
-import { openPdf } from 'pdf-simple';
+import { openPdf } from 'noto-pdf-ts';
 import fs from 'node:fs/promises';
 
 // PDFファイルを開く
@@ -53,5 +53,5 @@ await pdf.close();
 
 ## 次のステップ
 
-- [クイックスタート](/pdf-simple/ja/getting-started/quick-start/) - pdf-simpleを始める
-- [APIリファレンス](/pdf-simple/api/) - 完全なAPIを探索
+- [クイックスタート](/noto-pdf-ts/ja/getting-started/quick-start/) - noto-pdf-tsを始める
+- [APIリファレンス](/noto-pdf-ts/api/) - 完全なAPIを探索

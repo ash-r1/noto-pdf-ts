@@ -1,14 +1,14 @@
 ---
 title: Quick Start
-description: Get started with pdf-simple in minutes
+description: Get started with noto-pdf-ts in minutes
 ---
 
-This guide will help you get started with pdf-simple quickly.
+This guide will help you get started with noto-pdf-ts quickly.
 
 ## Installation
 
 ```bash
-npm install pdf-simple
+npm install noto-pdf-ts
 ```
 
 ## Basic Usage
@@ -16,7 +16,7 @@ npm install pdf-simple
 ### Rendering All Pages
 
 ```typescript
-import { openPdf } from 'pdf-simple';
+import { openPdf } from 'noto-pdf-ts';
 import fs from 'node:fs/promises';
 
 const pdf = await openPdf('/path/to/document.pdf');
@@ -34,7 +34,7 @@ await pdf.close();
 With ES2024's explicit resource management, you can use `await using` for automatic cleanup:
 
 ```typescript
-import { openPdf } from 'pdf-simple';
+import { openPdf } from 'noto-pdf-ts';
 import fs from 'node:fs/promises';
 
 await using pdf = await openPdf('/path/to/document.pdf');
@@ -50,7 +50,7 @@ for await (const page of pdf.renderPages()) {
 For simple use cases, use `renderPdfPages`:
 
 ```typescript
-import { renderPdfPages } from 'pdf-simple';
+import { renderPdfPages } from 'noto-pdf-ts';
 import fs from 'node:fs/promises';
 
 for await (const page of renderPdfPages('/path/to/document.pdf')) {
@@ -120,7 +120,7 @@ const pdf = await openPdf('/path/to/encrypted.pdf', {
 ## Error Handling
 
 ```typescript
-import { openPdf, PdfError } from 'pdf-simple';
+import { openPdf, PdfError } from 'noto-pdf-ts';
 
 try {
   const pdf = await openPdf('/path/to/document.pdf');
@@ -146,5 +146,5 @@ try {
 
 ## Next Steps
 
-- [API Reference](/pdf-simple/api/) - Explore the full API documentation
-- [Rendering Guide](/pdf-simple/guides/rendering/) - Learn advanced rendering techniques
+- [API Reference](/noto-pdf-ts/api/) - Explore the full API documentation
+- [Rendering Guide](/noto-pdf-ts/guides/rendering/) - Learn advanced rendering techniques

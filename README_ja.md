@@ -1,4 +1,4 @@
-# pdf-simple
+# noto-pdf-ts
 
 Node.js 向けのシンプルで効率的な PDF 変換ライブラリです。PDF ページを画像（JPEG/PNG）に変換できます。
 
@@ -14,7 +14,7 @@ Node.js 向けのシンプルで効率的な PDF 変換ライブラリです。P
 ## インストール
 
 ```bash
-npm install pdf-simple
+npm install noto-pdf-ts
 ```
 
 ### 必須依存
@@ -41,7 +41,7 @@ apk add build-base g++ cairo-dev jpeg-dev pango-dev giflib-dev
 ### 基本的な使い方
 
 ```typescript
-import { openPdf } from 'pdf-simple'
+import { openPdf } from 'noto-pdf-ts'
 import fs from 'node:fs/promises'
 
 // PDFを開く
@@ -61,7 +61,7 @@ await pdf.close()
 ### await using 構文（ES2024）
 
 ```typescript
-import { openPdf } from 'pdf-simple'
+import { openPdf } from 'noto-pdf-ts'
 
 // await using を使えば自動でクローズされる
 await using pdf = await openPdf('/path/to/document.pdf')
@@ -75,7 +75,7 @@ for await (const page of pdf.renderPages()) {
 ### 便利関数
 
 ```typescript
-import { renderPdfPages, getPageCount } from 'pdf-simple'
+import { renderPdfPages, getPageCount } from 'noto-pdf-ts'
 
 // 1行で全ページを変換（自動でクローズ）
 for await (const page of renderPdfPages('/path/to/document.pdf', { scale: 2 })) {
@@ -90,7 +90,7 @@ console.log(`${count} ページ`)
 ### 様々な入力形式
 
 ```typescript
-import { openPdf } from 'pdf-simple'
+import { openPdf } from 'noto-pdf-ts'
 
 // ファイルパス
 const pdf1 = await openPdf('/path/to/document.pdf')
@@ -176,7 +176,7 @@ interface RenderedPage {
 ### エラーハンドリング
 
 ```typescript
-import { openPdf, PdfError } from 'pdf-simple'
+import { openPdf, PdfError } from 'noto-pdf-ts'
 
 try {
   const pdf = await openPdf('/path/to/document.pdf')

@@ -1,13 +1,13 @@
 /**
- * pdf-simple/lite - Lightweight PDF conversion library for Node.js
+ * noto-pdf-ts/lite - Lightweight PDF conversion library for Node.js
  *
  * This is the lightweight variant that does not include embedded CJK fonts.
  * For CJK font support, use the PDFiumLibrary API with registerFonts():
  *
  * @example
  * ```typescript
- * import { PDFiumLibrary } from 'pdf-simple/lite'
- * import { loadNotoCJKFont } from 'pdf-simple/fonts/noto-cjk'
+ * import { PDFiumLibrary } from 'noto-pdf-ts/lite'
+ * import { loadNotoCJKFont } from 'noto-pdf-ts/fonts/noto-cjk'
  *
  * // Initialize PDFium library (lite variant)
  * const library = await PDFiumLibrary.initLite()
@@ -32,7 +32,7 @@
  *
  * @example
  * ```typescript
- * import { openPdf } from 'pdf-simple/lite'
+ * import { openPdf } from 'noto-pdf-ts/lite'
  *
  * const pdf = await openPdf('/path/to/document.pdf')
  * for await (const page of pdf.renderPages({ format: 'png' })) {
@@ -114,7 +114,7 @@ export async function openPdf(input: PdfInput, options?: PdfOpenOptions): Promis
  *
  * @example
  * ```typescript
- * import { renderPdfPages } from 'pdf-simple/lite'
+ * import { renderPdfPages } from 'noto-pdf-ts/lite'
  *
  * for await (const page of renderPdfPages('/path/to/document.pdf', { scale: 2 })) {
  *   console.log(`Page ${page.pageNumber}: ${page.width}x${page.height}`)

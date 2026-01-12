@@ -1,11 +1,11 @@
 {
-  "name": "pdf-simple Dev Container",
+  "name": "noto-pdf-ts Dev Container",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
   "mounts": [
-    "source=pdf-simple-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
-    "source=pdf-simple-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume",
-    "source=pdf-simple-claude-config,target=/home/node/.config/claude,type=volume",
-    "source=pdf-simple-claude-data,target=/home/node/.local/share/claude,type=volume"
+    "source=noto-pdf-ts-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=noto-pdf-ts-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume",
+    "source=noto-pdf-ts-claude-config,target=/home/node/.config/claude,type=volume",
+    "source=noto-pdf-ts-claude-data,target=/home/node/.local/share/claude,type=volume"
   ],
   "remoteUser": "node",
   "containerEnv": {

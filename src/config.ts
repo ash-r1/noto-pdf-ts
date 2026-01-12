@@ -1,5 +1,5 @@
 /**
- * Configuration for pdf-simple.
+ * Configuration for noto-pdf-ts.
  *
  * This module provides default configuration values for PDF rendering.
  *

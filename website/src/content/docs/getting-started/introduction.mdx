@@ -3,7 +3,7 @@ title: Introduction
 description: A simple, memory-efficient library for converting PDF pages to images in Node.js
 ---
 
-**pdf-simple** is a lightweight PDF to image conversion library for Node.js.
+**noto-pdf-ts** is a lightweight PDF to image conversion library for Node.js.
 
 ## Features
 
@@ -16,12 +16,12 @@ description: A simple, memory-efficient library for converting PDF pages to imag
 ## Installation
 
 ```bash
-npm install pdf-simple
+npm install noto-pdf-ts
 ```
 
 ### Canvas Dependency
 
-pdf-simple requires the `canvas` package for rendering. It's included as an optional dependency:
+noto-pdf-ts requires the `canvas` package for rendering. It's included as an optional dependency:
 
 ```bash
 # If canvas isn't installed automatically
@@ -31,7 +31,7 @@ npm install canvas
 ## Quick Example
 
 ```typescript
-import { openPdf } from 'pdf-simple';
+import { openPdf } from 'noto-pdf-ts';
 import fs from 'node:fs/promises';
 
 // Open a PDF file
@@ -53,5 +53,5 @@ await pdf.close();
 
 ## Next Steps
 
-- [Quick Start](/pdf-simple/getting-started/quick-start/) - Get started with pdf-simple
-- [API Reference](/pdf-simple/api/) - Explore the full API
+- [Quick Start](/noto-pdf-ts/getting-started/quick-start/) - Get started with noto-pdf-ts
+- [API Reference](/noto-pdf-ts/api/) - Explore the full API

@@ -3,7 +3,7 @@ title: Rendering Guide
 description: Advanced techniques for rendering PDF pages to images
 ---
 
-This guide covers advanced rendering techniques with pdf-simple.
+This guide covers advanced rendering techniques with noto-pdf-ts.
 
 ## Understanding Scale
 
@@ -36,7 +36,7 @@ await pdf.close();
 
 ## Memory Efficiency
 
-pdf-simple uses async generators for memory-efficient processing:
+noto-pdf-ts uses async generators for memory-efficient processing:
 
 ```typescript
 // Memory efficient - processes one page at a time
@@ -84,7 +84,7 @@ await Promise.all(
 
 ## CJK Font Support
 
-pdf-simple automatically detects and configures CMap files for CJK font support. If you need custom font paths:
+noto-pdf-ts automatically detects and configures CMap files for CJK font support. If you need custom font paths:
 
 ```typescript
 const pdf = await openPdf('/path/to/document.pdf', {

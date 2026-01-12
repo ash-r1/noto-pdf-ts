@@ -1,4 +1,4 @@
-# pdf-simple
+# noto-pdf-ts
 
 [日本語版 README](./README_ja.md)
 
@@ -16,7 +16,7 @@ A simple and efficient PDF conversion library for Node.js. Convert PDF pages to 
 ## Installation
 
 ```bash
-npm install pdf-simple
+npm install noto-pdf-ts
 ```
 
 ### Required Dependencies
@@ -43,7 +43,7 @@ apk add build-base g++ cairo-dev jpeg-dev pango-dev giflib-dev
 ### Basic Usage
 
 ```typescript
-import { openPdf } from 'pdf-simple'
+import { openPdf } from 'noto-pdf-ts'
 import fs from 'node:fs/promises'
 
 // Open a PDF
@@ -63,7 +63,7 @@ await pdf.close()
 ### await using Syntax (ES2024)
 
 ```typescript
-import { openPdf } from 'pdf-simple'
+import { openPdf } from 'noto-pdf-ts'
 
 // Using await using automatically closes the PDF
 await using pdf = await openPdf('/path/to/document.pdf')
@@ -77,7 +77,7 @@ for await (const page of pdf.renderPages()) {
 ### Convenience Functions
 
 ```typescript
-import { renderPdfPages, getPageCount } from 'pdf-simple'
+import { renderPdfPages, getPageCount } from 'noto-pdf-ts'
 
 // Convert all pages in one line (auto-closes)
 for await (const page of renderPdfPages('/path/to/document.pdf', { scale: 2 })) {
@@ -92,7 +92,7 @@ console.log(`${count} pages`)
 ### Various Input Formats
 
 ```typescript
-import { openPdf } from 'pdf-simple'
+import { openPdf } from 'noto-pdf-ts'
 
 // File path
 const pdf1 = await openPdf('/path/to/document.pdf')
@@ -178,7 +178,7 @@ interface RenderedPage {
 ### Error Handling
 
 ```typescript
-import { openPdf, PdfError } from 'pdf-simple'
+import { openPdf, PdfError } from 'noto-pdf-ts'
 
 try {
   const pdf = await openPdf('/path/to/document.pdf')

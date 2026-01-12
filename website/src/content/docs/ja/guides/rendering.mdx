@@ -3,7 +3,7 @@ title: レンダリングガイド
 description: PDFページを画像にレンダリングする高度なテクニック
 ---
 
-このガイドでは、pdf-simpleを使用した高度なレンダリングテクニックを説明します。
+このガイドでは、noto-pdf-tsを使用した高度なレンダリングテクニックを説明します。
 
 ## スケールの理解
 
@@ -36,7 +36,7 @@ await pdf.close();
 
 ## メモリ効率
 
-pdf-simpleはメモリ効率の良い処理のために非同期ジェネレータを使用します：
+noto-pdf-tsはメモリ効率の良い処理のために非同期ジェネレータを使用します：
 
 ```typescript
 // メモリ効率的 - 一度に1ページずつ処理
@@ -84,7 +84,7 @@ await Promise.all(
 
 ## CJKフォントサポート
 
-pdf-simpleはCJKフォントサポートのためにCMapファイルを自動的に検出して設定します。カスタムフォントパスが必要な場合：
+noto-pdf-tsはCJKフォントサポートのためにCMapファイルを自動的に検出して設定します。カスタムフォントパスが必要な場合：
 
 ```typescript
 const pdf = await openPdf('/path/to/document.pdf', {

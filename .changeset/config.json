@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.2/schema.json",
   "changelog": [
     "@changesets/changelog-github",
-    { "repo": "ash-r1/pdf-simple" }
+    { "repo": "ash-r1/noto-pdf-ts" }
   ],
   "commit": false,
   "fixed": [],

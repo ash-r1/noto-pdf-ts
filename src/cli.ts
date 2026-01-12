@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * pdf-simple CLI
+ * noto-pdf-ts CLI
  *
- * Command-line interface for pdf-simple utilities.
+ * Command-line interface for noto-pdf-ts utilities.
  *
  * @module cli
  */
@@ -18,7 +18,7 @@ import { formatDoctorResult, runDoctor } from './doctor.js';
 function getVersion(): string {
   try {
     const require = createRequire(import.meta.url);
-    const packageJsonPath = require.resolve('pdf-simple/package.json');
+    const packageJsonPath = require.resolve('noto-pdf-ts/package.json');
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
     return packageJson.version ?? '0.0.0';
   } catch {
@@ -43,9 +43,9 @@ const VERSION: string = getVersion();
  * Print usage information.
  */
 function printUsage(): void {
-  console.log(`pdf-simple v${VERSION}
+  console.log(`noto-pdf-ts v${VERSION}
 
-Usage: pdf-simple <command>
+Usage: noto-pdf-ts <command>
 
 Commands:
   doctor    Check dependencies and configuration
@@ -53,7 +53,7 @@ Commands:
   version   Show version number
 
 Examples:
-  pdf-simple doctor    # Check if all dependencies are properly installed
+  noto-pdf-ts doctor    # Check if all dependencies are properly installed
 `);
 }
 
@@ -102,7 +102,7 @@ async function main(): Promise<void> {
 
     default:
       console.error(`Unknown command: ${command}`);
-      console.error('Run "pdf-simple help" for usage information.');
+      console.error('Run "noto-pdf-ts help" for usage information.');
       exitCode = 1;
   }
 
