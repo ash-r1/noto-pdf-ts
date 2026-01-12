@@ -40,9 +40,22 @@ const matchSnapshot = createSnapshotMatcher(import.meta.url, {
 });
 
 /**
+ * Options for testAllPages helper
+ */
+interface TestAllPagesOptions {
+  maxPages?: number;
+  ignoreMissingGlyphs?: boolean;
+}
+
+/**
  * Helper function to test all pages of a PDF
  */
-async function testAllPages(pdfPath: string, snapshotPrefix: string, maxPages?: number) {
+async function testAllPages(
+  pdfPath: string,
+  snapshotPrefix: string,
+  options: TestAllPagesOptions = {},
+) {
+  const { maxPages, ignoreMissingGlyphs } = options;
   const pdf = await openPdf(pdfPath);
 
   try {
@@ -52,7 +65,11 @@ async function testAllPages(pdfPath: string, snapshotPrefix: string, maxPages?: 
     const pageCount = maxPages ? Math.min(totalPages, maxPages) : totalPages;
 
     for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-      const page = await pdf.renderPage(pageNum, { format: 'png', scale: 1.0 });
+      const page = await pdf.renderPage(pageNum, {
+        format: 'png',
+        scale: 1.0,
+        ignoreMissingGlyphs,
+      });
       const result = matchSnapshot(page.buffer, `${snapshotPrefix}-page-${pageNum}`);
 
       expect(
@@ -79,7 +96,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
   describe('Japanese PDFs', () => {
     it('SFAA_Japanese.pdf - should render first 5 pages correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'jp/SFAA_Japanese.pdf');
-      const pageCount = await testAllPages(pdfPath, 'jp-sfaa', 5);
+      const pageCount = await testAllPages(pdfPath, 'jp-sfaa', { maxPages: 5 });
       expect(pageCount).toBe(5);
     });
 
@@ -101,9 +118,12 @@ describeWithPdfium('CJK Rendering Tests', () => {
       expect(pageCount).toBeGreaterThan(0);
     });
 
+    // Note: This PDF has some characters with incomplete Unicode mappings
     it('arial_unicode_ab_cidfont.pdf - should render all pages with Arial Unicode CID font correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'jp/arial_unicode_ab_cidfont.pdf');
-      const pageCount = await testAllPages(pdfPath, 'jp-arial-unicode-cid');
+      const pageCount = await testAllPages(pdfPath, 'jp-arial-unicode-cid', {
+        ignoreMissingGlyphs: true,
+      });
       expect(pageCount).toBeGreaterThan(0);
     });
   });
@@ -117,15 +137,21 @@ describeWithPdfium('CJK Rendering Tests', () => {
   });
 
   describe('Korean PDFs', () => {
+    // Note: These Korean PDFs have some characters with incomplete Unicode mappings.
+    // We use ignoreMissingGlyphs: true to allow rendering with tofu boxes.
     it('eps-hangul.pdf - should render all pages correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'kr/eps-hangul.pdf');
-      const pageCount = await testAllPages(pdfPath, 'kr-eps-hangul');
+      const pageCount = await testAllPages(pdfPath, 'kr-eps-hangul', {
+        ignoreMissingGlyphs: true,
+      });
       expect(pageCount).toBeGreaterThan(0);
     });
 
     it('hangul-practice-worksheet.pdf - should render all pages correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'kr/hangul-practice-worksheet.pdf');
-      const pageCount = await testAllPages(pdfPath, 'kr-hangul-worksheet');
+      const pageCount = await testAllPages(pdfPath, 'kr-hangul-worksheet', {
+        ignoreMissingGlyphs: true,
+      });
       expect(pageCount).toBeGreaterThan(0);
     });
   });
@@ -190,14 +216,22 @@ describeWithPdfium('CJK Rendering Tests', () => {
     it('should produce identical output for same Korean PDF rendered twice', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'kr/eps-hangul.pdf');
 
-      // First render
+      // First render (ignoreMissingGlyphs because this PDF has incomplete Unicode mappings)
       const pdf1 = await openPdf(pdfPath);
-      const page1 = await pdf1.renderPage(1, { format: 'png', scale: 1.0 });
+      const page1 = await pdf1.renderPage(1, {
+        format: 'png',
+        scale: 1.0,
+        ignoreMissingGlyphs: true,
+      });
       await pdf1.close();
 
       // Second render
       const pdf2 = await openPdf(pdfPath);
-      const page2 = await pdf2.renderPage(1, { format: 'png', scale: 1.0 });
+      const page2 = await pdf2.renderPage(1, {
+        format: 'png',
+        scale: 1.0,
+        ignoreMissingGlyphs: true,
+      });
       await pdf2.close();
 
       // Compare the two renders

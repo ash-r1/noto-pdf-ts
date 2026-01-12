@@ -90,6 +90,7 @@ export interface PDFiumModule {
   _FPDFText_ClosePage(textPage: number): void;
   _FPDFText_CountChars(textPage: number): number;
   _FPDFText_GetText(textPage: number, startIndex: number, count: number, buffer: number): number;
+  _FPDFText_HasUnicodeMapError(textPage: number, charIndex: number): number;
 
   // Emscripten utilities (optional - may not be exported by all WASM builds)
   setValue?(ptr: number, value: number, type: string): void;

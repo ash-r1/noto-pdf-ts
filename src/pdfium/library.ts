@@ -321,6 +321,16 @@ export interface RenderedImage {
 export interface RenderOptions {
   scale?: number;
   render?: 'bitmap';
+  ignoreMissingGlyphs?: boolean;
+  missingGlyphThreshold?: number;
+}
+
+/**
+ * Result of missing glyph check.
+ */
+interface MissingGlyphCheckResult {
+  hasMissingGlyphs: boolean;
+  missingCount: number;
 }
 
 /**
@@ -357,6 +367,9 @@ export class PDFiumPage {
    */
   public render(options: RenderOptions = {}): RenderedImage {
     const scale = options.scale ?? 1;
+    const ignoreMissingGlyphs = options.ignoreMissingGlyphs ?? false;
+    const missingGlyphThreshold = options.missingGlyphThreshold ?? 0;
+
     const width = Math.ceil(this.width * scale);
     const height = Math.ceil(this.height * scale);
     const stride = width * BYTES_PER_PIXEL;
@@ -394,6 +407,16 @@ export class PDFiumPage {
     module._FPDFBitmap_Destroy(bitmap);
     wasmExports.free(bufferPtr);
 
+    // Check for missing glyphs after rendering (for minimal performance impact)
+    if (!ignoreMissingGlyphs) {
+      const glyphCheck = this.checkMissingGlyphs();
+      if (glyphCheck.hasMissingGlyphs && glyphCheck.missingCount > missingGlyphThreshold) {
+        throw new Error(
+          `Missing glyphs detected: ${glyphCheck.missingCount} character(s) could not be rendered`,
+        );
+      }
+    }
+
     return { data, width, height };
   }
 
@@ -402,5 +425,44 @@ export class PDFiumPage {
    */
   public close(): void {
     this.module._FPDF_ClosePage(this.pagePtr);
+  }
+
+  /**
+   * Checks for missing glyphs (characters with invalid Unicode mapping).
+   *
+   * Uses FPDFText_HasUnicodeMapError to detect characters that cannot
+   * be properly rendered due to missing font information.
+   *
+   * @returns Check result with missing glyph count
+   * @internal
+   */
+  private checkMissingGlyphs(): MissingGlyphCheckResult {
+    const { module, pagePtr } = this;
+
+    // Load text page for character analysis
+    const textPagePtr = module._FPDFText_LoadPage(pagePtr);
+    if (!textPagePtr) {
+      // If text page cannot be loaded, assume no text content
+      return { hasMissingGlyphs: false, missingCount: 0 };
+    }
+
+    try {
+      const charCount = module._FPDFText_CountChars(textPagePtr);
+      let missingCount = 0;
+
+      for (let i = 0; i < charCount; i++) {
+        // Returns 1 if character has invalid Unicode mapping
+        if (module._FPDFText_HasUnicodeMapError(textPagePtr, i) === 1) {
+          missingCount++;
+        }
+      }
+
+      return {
+        hasMissingGlyphs: missingCount > 0,
+        missingCount,
+      };
+    } finally {
+      module._FPDFText_ClosePage(textPagePtr);
+    }
   }
 }
