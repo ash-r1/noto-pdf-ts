@@ -10,6 +10,7 @@
 import { DEFAULT_FONT_DIR, PDFIUM_FONT_PATHS, registerFonts } from './fonts.js';
 import type { FontConfig, PDFiumModule } from './types.js';
 import { FPDFBitmap, FPDFErrorCode } from './types.js';
+import loadPdfiumModule from './wasm/pdfium.js';
 import { lengthBytesUTF8, stringToUTF8 } from './wasm-utils.js';
 
 /**
@@ -70,9 +71,7 @@ export class PDFiumLibrary {
    * @returns Promise resolving to a PDFiumLibrary instance
    */
   public static async initLite(): Promise<PDFiumLibrary> {
-    // Dynamic import of lite variant WASM loader
-    const { loadPdfiumLite } = await import('./wasm-lite.js');
-    return PDFiumLibrary.initWithLoader(loadPdfiumLite);
+    return PDFiumLibrary.initWithLoader(loadPdfiumModule);
   }
 
   /**
