@@ -12,6 +12,7 @@ A simple and efficient PDF conversion library for Node.js. Convert PDF pages to 
 - Full TypeScript support - Includes type definitions
 - ESM only (CommonJS is not supported)
 - `await using` syntax support (ES2024 AsyncDisposable)
+- Zero native dependencies - Uses PDFium WebAssembly for rendering
 
 ## PDF Font Basics
 
@@ -54,25 +55,6 @@ This approach ensures consistent rendering across platforms, with excellent CJK 
 ```bash
 # Install the latest alpha version
 npm install noto-pdf-ts@alpha
-```
-
-### Required Dependencies
-
-This library requires [canvas](https://github.com/Automattic/node-canvas) as a peer dependency. Install the following system dependencies:
-
-**macOS:**
-```bash
-brew install pkg-config cairo pango libpng jpeg giflib librsvg
-```
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
-```
-
-**Alpine Linux:**
-```bash
-apk add build-base g++ cairo-dev jpeg-dev pango-dev giflib-dev
 ```
 
 ## Usage
@@ -186,8 +168,6 @@ Opens a PDF document.
 
 - `input`: `string | Buffer | Uint8Array | ArrayBuffer` - File path or binary data
 - `options.password?`: `string` - Password for encrypted PDFs
-- `options.cMapPath?`: `string` - Custom path to CMap files
-- `options.standardFontPath?`: `string` - Custom path to standard font files
 
 ### `PdfDocument`
 
@@ -244,7 +224,6 @@ try {
 ## Requirements
 
 - Node.js >= 20.0.0
-- Native dependencies for canvas (see above)
 
 ## License
 

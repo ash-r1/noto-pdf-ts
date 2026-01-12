@@ -10,6 +10,7 @@ Node.js 向けのシンプルで効率的な PDF 変換ライブラリです。P
 - TypeScript 完全対応 - 型定義付き
 - ESM のみ対応（CommonJS は非サポート）
 - `await using` 構文対応（ES2024 AsyncDisposable）
+- ネイティブ依存なし - レンダリングに PDFium WebAssembly を使用
 
 ## PDFフォントの基礎知識
 
@@ -52,25 +53,6 @@ noto-pdf-tsはこれらの課題に以下のように対処しています：
 ```bash
 # 最新の alpha 版をインストール
 npm install noto-pdf-ts@alpha
-```
-
-### 必須依存
-
-このライブラリは [canvas](https://github.com/Automattic/node-canvas) を peer dependency として必要とします。システムに以下の依存関係をインストールしてください：
-
-**macOS:**
-```bash
-brew install pkg-config cairo pango libpng jpeg giflib librsvg
-```
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
-```
-
-**Alpine Linux:**
-```bash
-apk add build-base g++ cairo-dev jpeg-dev pango-dev giflib-dev
 ```
 
 ## 使用方法
@@ -184,8 +166,6 @@ PDFドキュメントを開きます。
 
 - `input`: `string | Buffer | Uint8Array | ArrayBuffer` - ファイルパスまたはバイナリデータ
 - `options.password?`: `string` - 暗号化PDFのパスワード
-- `options.cMapPath?`: `string` - CMapファイルへのカスタムパス
-- `options.standardFontPath?`: `string` - 標準フォントファイルへのカスタムパス
 
 ### `PdfDocument`
 
@@ -242,7 +222,6 @@ try {
 ## 動作環境
 
 - Node.js >= 20.0.0
-- canvas のネイティブ依存関係（上記参照）
 
 ## ライセンス
 
