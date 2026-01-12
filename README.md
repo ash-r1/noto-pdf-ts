@@ -8,10 +8,44 @@ A simple and efficient PDF conversion library for Node.js. Convert PDF pages to 
 
 - Simple API - Open PDFs with `openPdf()` and convert to images with `renderPages()`
 - Memory efficient - Process one page at a time using AsyncGenerator
-- Japanese/CJK font support - Automatic CMap detection from pdfjs-dist
+- Japanese/CJK font support - Bundled Noto CJK fonts for reliable rendering
 - Full TypeScript support - Includes type definitions
 - ESM only (CommonJS is not supported)
 - `await using` syntax support (ES2024 AsyncDisposable)
+
+## PDF Font Basics
+
+### Font Formats in PDFs
+
+PDFs can contain text in various font formats:
+
+- **TrueType (.ttf)** - A common font format developed by Apple and Microsoft, widely used in operating systems and documents
+- **OpenType (.otf)** - An extension of TrueType developed by Microsoft and Adobe, offering advanced typographic features
+- **Type 1** - Adobe's older PostScript font format
+- **CID fonts** - Fonts designed for large character sets like CJK (Chinese, Japanese, Korean)
+
+### Embedded vs. Referenced Fonts
+
+PDFs handle fonts in two ways:
+
+1. **Embedded fonts** - The font data is stored directly within the PDF file. This ensures the document looks identical on any system, regardless of installed fonts.
+
+2. **Referenced fonts** - The PDF only stores the font name, expecting the viewing system to provide the font. This results in smaller file sizes but may cause display issues.
+
+### The "Tofu" Problem
+
+When a PDF references a font that isn't available on the system, and no suitable substitute can be found, the renderer may display characters as empty rectangles (□). This is commonly called "tofu" because the rectangles resemble blocks of tofu. This is especially common with CJK characters, which require specialized fonts.
+
+### noto-pdf-ts Approach
+
+noto-pdf-ts addresses these challenges by:
+
+1. **PDFium-based rendering** - Uses Google's PDFium library (the same engine behind Chrome's PDF viewer) compiled to WebAssembly for reliable, high-quality rendering
+2. **Bundled Noto CJK fonts** - Includes Noto Sans CJK fonts out of the box, eliminating tofu for CJK text even when PDFs lack embedded fonts
+3. **Custom font registration** - Allows registering additional fonts for specialized use cases
+4. **Missing glyph detection** - Detects characters that cannot be rendered due to missing font information, helping identify problematic PDFs
+
+This approach ensures consistent rendering across platforms, with excellent CJK support by default.
 
 ## Installation
 
