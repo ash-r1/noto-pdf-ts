@@ -113,7 +113,9 @@ function detectNonEmbeddedFonts(pdfData: Uint8Array): string[] {
 
     // biome-ignore lint/suspicious/noAssignInExpressions: Standard regex exec pattern
     while ((match = baseFontPattern.exec(pdfString)) !== null) {
-      allBaseFonts.push(match[1]);
+      if (match[1]) {
+        allBaseFonts.push(match[1]);
+      }
     }
 
     // Filter out Base 14 fonts and fonts with subset prefixes (which are embedded)
