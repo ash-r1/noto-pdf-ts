@@ -290,6 +290,8 @@ export class PdfDocumentImpl implements PdfDocument {
     const scale = options.scale ?? DEFAULT_RENDER_OPTIONS.scale;
     const format = options.format ?? DEFAULT_RENDER_OPTIONS.format;
     const quality = options.quality ?? DEFAULT_RENDER_OPTIONS.quality;
+    const ignoreMissingGlyphs = options.ignoreMissingGlyphs ?? false;
+    const missingGlyphThreshold = options.missingGlyphThreshold ?? 0;
 
     try {
       // PDFium uses 0-indexed pages
@@ -298,7 +300,12 @@ export class PdfDocumentImpl implements PdfDocument {
       const page = this.document.getPage(pageNumber - 1);
 
       // Render to raw BGRA bitmap (PDFium native format)
-      const image = page.render({ render: 'bitmap', scale });
+      const image = page.render({
+        render: 'bitmap',
+        scale,
+        ignoreMissingGlyphs,
+        missingGlyphThreshold,
+      });
       const { data, width, height } = image;
 
       // Convert BGRA to RGBA (swap red and blue channels)
@@ -328,6 +335,16 @@ export class PdfDocumentImpl implements PdfDocument {
         height,
       };
     } catch (error) {
+      // Handle missing glyph errors with specific error code
+      if (error instanceof Error && error.message.includes('Missing glyphs detected')) {
+        const match = error.message.match(/(\d+) character/);
+        const count = match ? match[1] : 'unknown';
+        throw new PdfError(
+          `Page ${pageNumber}: ${count} missing glyph(s) detected`,
+          'MISSING_GLYPHS',
+          error,
+        );
+      }
       throw new PdfError(
         `Failed to render page ${pageNumber}: ${error instanceof Error ? error.message : String(error)}`,
         'RENDER_FAILED',

@@ -60,7 +60,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'simple-text-page-1');
+        const result = matchSnapshot(page.buffer, 'simple-text/1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -74,7 +74,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 2.0 });
-        const result = matchSnapshot(page.buffer, 'simple-text-page-1-2x');
+        const result = matchSnapshot(page.buffer, 'simple-text/1-2x');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -90,7 +90,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'shapes-page-1');
+        const result = matchSnapshot(page.buffer, 'shapes/1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -109,7 +109,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
         for (let pageNum = 1; pageNum <= pdf.pageCount; pageNum++) {
           const page = await pdf.renderPage(pageNum, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, `multi-page-page-${pageNum}`);
+          const result = matchSnapshot(page.buffer, `multi-page/${pageNum}`);
 
           expect(result.match, `Page ${pageNum} diff: ${result.diffPercentage.toFixed(2)}%`).toBe(
             true,
@@ -128,7 +128,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'gradient-page-1');
+        const result = matchSnapshot(page.buffer, 'gradient/1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {

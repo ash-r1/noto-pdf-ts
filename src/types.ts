@@ -223,6 +223,44 @@ export interface RenderOptions {
    * ```
    */
   pages?: number[] | PageRange;
+
+  /**
+   * Whether to ignore missing glyphs during rendering.
+   *
+   * When `false` (default), a {@link PdfError} with code `MISSING_GLYPHS`
+   * is thrown if characters cannot be properly rendered due to missing
+   * Unicode mappings in the font.
+   *
+   * When `true`, missing glyphs are silently rendered as tofu (blank boxes).
+   *
+   * @defaultValue false
+   *
+   * @example
+   * ```typescript
+   * // Strict mode - throw on missing glyphs (default)
+   * const page = await pdf.renderPage(1)
+   *
+   * // Permissive mode - allow tofu rendering
+   * const page = await pdf.renderPage(1, { ignoreMissingGlyphs: true })
+   * ```
+   */
+  ignoreMissingGlyphs?: boolean;
+
+  /**
+   * Maximum number of missing glyphs allowed before throwing an error.
+   *
+   * Only relevant when `ignoreMissingGlyphs` is `false`.
+   * If set, allows up to N missing characters without throwing.
+   *
+   * @defaultValue 0 (throw on any missing glyph)
+   *
+   * @example
+   * ```typescript
+   * // Allow up to 5 missing characters
+   * const page = await pdf.renderPage(1, { missingGlyphThreshold: 5 })
+   * ```
+   */
+  missingGlyphThreshold?: number;
 }
 
 /**
@@ -485,5 +523,7 @@ export type PdfErrorCode =
   | 'DOCUMENT_CLOSED'
   /** Font is not embedded and cannot be rendered correctly */
   | 'MISSING_FONT'
+  /** Missing glyphs detected during rendering */
+  | 'MISSING_GLYPHS'
   /** An unexpected error occurred */
   | 'UNKNOWN';
