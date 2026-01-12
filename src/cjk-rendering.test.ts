@@ -77,9 +77,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
   });
 
   describe('Japanese PDFs', () => {
-    // SFAA_Japanese.pdf is skipped because it contains TimesNewRoman without embedding.
-    // TimesNewRoman is not a PDF Base 14 font (Times-Roman is), so it requires embedding.
-    it.skip('SFAA_Japanese.pdf - should render first 5 pages correctly', async () => {
+    it('SFAA_Japanese.pdf - should render first 5 pages correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'jp/SFAA_Japanese.pdf');
       const pageCount = await testAllPages(pdfPath, 'jp-sfaa', 5);
       expect(pageCount).toBe(5);
