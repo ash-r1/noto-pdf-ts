@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 let pdfiumAvailable = false;
 try {
   // Try to import PDFium and sharp to check if they work
-  const { PDFiumLibrary } = await import('@hyzyla/pdfium');
+  const { PDFiumLibrary } = await import('./pdfium/index.js');
   await import('sharp');
   await PDFiumLibrary.init();
   pdfiumAvailable = true;

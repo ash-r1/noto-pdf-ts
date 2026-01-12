@@ -7,7 +7,8 @@
  * @module pdfium/wasm-full
  */
 
-import type { PDFiumModule } from './types.js';
+import type { LoadPdfiumOptions, PDFiumModule } from './types.js';
+import loadPdfiumFullModule from './wasm/pdfium-full.js';
 
 /**
  * Loads the PDFium Full WASM module.
@@ -18,17 +19,6 @@ import type { PDFiumModule } from './types.js';
  * @param options - Optional configuration
  * @returns Promise resolving to the PDFium module
  */
-export function loadPdfiumFull(_options?: {
-  locateFile?: (path: string) => string;
-}): Promise<PDFiumModule> {
-  // TODO: Replace with actual WASM import once built
-  // The WASM file will be built by: pdfium-build/build.py --variant full
-  //
-  // Expected import:
-  // import loadPdfium from './wasm/pdfium-full.js';
-  // return loadPdfium(options);
-
-  throw new Error(
-    'PDFium Full WASM not yet built. Run: cd pdfium-build && docker build -t pdfium-wasm . && docker run -v $(pwd)/output:/output pdfium-wasm',
-  );
+export function loadPdfiumFull(options?: LoadPdfiumOptions): Promise<PDFiumModule> {
+  return loadPdfiumFullModule(options);
 }

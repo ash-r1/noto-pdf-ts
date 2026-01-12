@@ -2,7 +2,7 @@
  * PDF Document implementation using PDFium.
  *
  * This module contains the internal implementation of the PDF document
- * handling. It uses PDFium (via @hyzyla/pdfium) for PDF parsing and rendering,
+ * handling. It uses PDFium for PDF parsing and rendering,
  * which provides stable TrueType embedded font support.
  *
  * @module pdf-document
@@ -10,10 +10,9 @@
  */
 
 import fs from 'node:fs/promises';
-import { type PDFiumDocument, PDFiumLibrary } from '@hyzyla/pdfium';
 import sharp from 'sharp';
-
 import { DEFAULT_RENDER_OPTIONS } from './config.js';
+import { type PDFiumDocument, PDFiumLibrary } from './pdfium/index.js';
 import type {
   PageRange,
   PdfDocument,
@@ -95,7 +94,7 @@ export class PdfDocumentImpl implements PdfDocument {
     const library = await getLibrary();
 
     try {
-      const document = await library.loadDocument(data, options.password);
+      const document = library.loadDocument(data, options.password);
       return new PdfDocumentImpl(document);
     } catch (error) {
       throw wrapPdfiumError(error);
@@ -277,8 +276,8 @@ export class PdfDocumentImpl implements PdfDocument {
       // Memory is managed internally and released when PDFiumDocument.destroy() is called.
       const page = this.document.getPage(pageNumber - 1);
 
-      // Render to raw RGBA bitmap
-      const image = await page.render({ render: 'bitmap', scale });
+      // Render to raw RGBA bitmap (synchronous in our implementation)
+      const image = page.render({ render: 'bitmap', scale });
       const { data, width, height } = image;
 
       // Convert raw RGBA to image format using sharp

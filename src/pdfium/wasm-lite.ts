@@ -7,7 +7,8 @@
  * @module pdfium/wasm-lite
  */
 
-import type { PDFiumModule } from './types.js';
+import type { LoadPdfiumOptions, PDFiumModule } from './types.js';
+import loadPdfiumLiteModule from './wasm/pdfium-lite.js';
 
 /**
  * Loads the PDFium Lite WASM module.
@@ -18,17 +19,6 @@ import type { PDFiumModule } from './types.js';
  * @param options - Optional configuration
  * @returns Promise resolving to the PDFium module
  */
-export function loadPdfiumLite(_options?: {
-  locateFile?: (path: string) => string;
-}): Promise<PDFiumModule> {
-  // TODO: Replace with actual WASM import once built
-  // The WASM file will be built by: pdfium-build/build.py --variant lite
-  //
-  // Expected import:
-  // import loadPdfium from './wasm/pdfium-lite.js';
-  // return loadPdfium(options);
-
-  throw new Error(
-    'PDFium Lite WASM not yet built. Run: cd pdfium-build && docker build -t pdfium-wasm . && docker run -v $(pwd)/output:/output pdfium-wasm',
-  );
+export function loadPdfiumLite(options?: LoadPdfiumOptions): Promise<PDFiumModule> {
+  return loadPdfiumLiteModule(options);
 }

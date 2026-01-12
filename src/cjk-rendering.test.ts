@@ -19,7 +19,7 @@ import { cleanupDiffs, createSnapshotMatcher } from './test-utils/image-comparis
 // Check if PDFium and sharp are available
 let pdfiumAvailable = false;
 try {
-  const { PDFiumLibrary } = await import('@hyzyla/pdfium');
+  const { PDFiumLibrary } = await import('./pdfium/index.js');
   await import('sharp');
   await PDFiumLibrary.init();
   pdfiumAvailable = true;

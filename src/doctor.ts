@@ -2,7 +2,7 @@
  * Doctor module for checking pdf-simple dependencies and configuration.
  *
  * This module provides diagnostic checks to verify that all required
- * dependencies (@hyzyla/pdfium, sharp) are properly installed and configured.
+ * dependencies (PDFium WASM, sharp) are properly installed and configured.
  *
  * @module doctor
  */
@@ -100,25 +100,48 @@ function checkNodeVersion(): CheckResult {
 }
 
 /**
- * Check if @hyzyla/pdfium is installed and accessible.
+ * Check if PDFium WASM files are available.
  */
-function checkPdfium(): CheckResult {
+function checkPdfiumFiles(): CheckResult {
   try {
-    const packageJsonPath = localRequire.resolve('@hyzyla/pdfium/package.json');
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-    const version = packageJson.version ?? 'unknown';
+    // Check if the WASM loader files exist
+    const wasmDir = path.join(import.meta.dirname, 'pdfium', 'wasm');
+
+    // Check for placeholder vs actual WASM
+    const fullJsPath = path.join(wasmDir, 'pdfium-full.js');
+    if (fs.existsSync(fullJsPath)) {
+      const content = fs.readFileSync(fullJsPath, 'utf-8');
+      const isPlaceholder = content.includes('not yet built');
+
+      if (isPlaceholder) {
+        return {
+          name: 'PDFium WASM files',
+          ok: false,
+          message: 'PDFium WASM files not yet built (placeholder detected)',
+          details:
+            'Run the "Build PDFium WASM" GitHub Actions workflow or build locally with Docker.',
+        };
+      }
+
+      return {
+        name: 'PDFium WASM files',
+        ok: true,
+        message: 'PDFium WASM files present',
+      };
+    }
 
     return {
-      name: '@hyzyla/pdfium',
-      ok: true,
-      message: `@hyzyla/pdfium ${version} installed`,
+      name: 'PDFium WASM files',
+      ok: false,
+      message: 'PDFium WASM loader not found',
+      details: 'Run the "Build PDFium WASM" GitHub Actions workflow or build locally with Docker.',
     };
   } catch {
     return {
-      name: '@hyzyla/pdfium',
+      name: 'PDFium WASM files',
       ok: false,
-      message: '@hyzyla/pdfium not found',
-      details: 'Run: npm install @hyzyla/pdfium',
+      message: 'Error checking PDFium WASM files',
+      details: 'Run the "Build PDFium WASM" GitHub Actions workflow or build locally with Docker.',
     };
   }
 }
@@ -186,7 +209,7 @@ async function checkSharp(): Promise<CheckResult> {
  */
 async function checkPdfiumWasm(): Promise<CheckResult> {
   try {
-    const { PDFiumLibrary } = await import('@hyzyla/pdfium');
+    const { PDFiumLibrary } = await import('./pdfium/index.js');
     const library = await PDFiumLibrary.init();
 
     // Verify library is working by checking it's not null
@@ -195,7 +218,8 @@ async function checkPdfiumWasm(): Promise<CheckResult> {
         name: 'PDFium WASM',
         ok: false,
         message: 'PDFium WASM initialization returned null',
-        details: 'Try reinstalling @hyzyla/pdfium',
+        details:
+          'Run the "Build PDFium WASM" GitHub Actions workflow or build locally with Docker.',
       };
     }
 
@@ -211,7 +235,7 @@ async function checkPdfiumWasm(): Promise<CheckResult> {
       name: 'PDFium WASM',
       ok: false,
       message: `PDFium WASM initialization failed: ${errorMessage}`,
-      details: 'Check Node.js version compatibility and try reinstalling @hyzyla/pdfium',
+      details: 'Run the "Build PDFium WASM" GitHub Actions workflow or build locally with Docker.',
     };
   }
 }
@@ -228,14 +252,14 @@ async function checkPdfRendering(pdfiumOk: boolean, sharpOk: boolean): Promise<C
       name: 'PDF rendering',
       ok: false,
       message: 'Skipped (dependencies not available)',
-      details: 'Fix @hyzyla/pdfium and sharp installation first, then re-run doctor.',
+      details: 'Fix PDFium WASM and sharp installation first, then re-run doctor.',
     };
   }
 
   try {
     // Dynamic imports (module namespace objects require .default for default exports)
     const { PDFDocument, StandardFonts } = await import('pdf-lib');
-    const { PDFiumLibrary } = await import('@hyzyla/pdfium');
+    const { PDFiumLibrary } = await import('./pdfium/index.js');
     const sharpModule = await import('sharp');
     const sharpFn = sharpModule.default;
 
@@ -248,11 +272,11 @@ async function checkPdfRendering(pdfiumOk: boolean, sharpOk: boolean): Promise<C
 
     // Load and render using PDFium
     const library = await PDFiumLibrary.init();
-    const document = await library.loadDocument(new Uint8Array(pdfBytes));
+    const document = library.loadDocument(new Uint8Array(pdfBytes));
     const pdfPage = document.getPage(0);
 
-    // Render page
-    const image = await pdfPage.render({ render: 'bitmap', scale: 1.0 });
+    // Render page (synchronous in our implementation)
+    const image = pdfPage.render({ render: 'bitmap', scale: 1.0 });
     const { data, width, height } = image;
 
     // Convert to PNG using sharp
@@ -271,7 +295,7 @@ async function checkPdfRendering(pdfiumOk: boolean, sharpOk: boolean): Promise<C
         name: 'PDF rendering',
         ok: false,
         message: 'PDF rendering produced empty output',
-        details: 'Check @hyzyla/pdfium and sharp installation.',
+        details: 'Check PDFium WASM and sharp installation.',
       };
     }
 
@@ -330,7 +354,7 @@ export async function runDoctor(): Promise<DoctorResult> {
 
   // Synchronous checks
   checks.push(checkNodeVersion());
-  checks.push(checkPdfium());
+  checks.push(checkPdfiumFiles());
 
   // Sharp check (required for image conversion)
   const sharpResult = await checkSharp();

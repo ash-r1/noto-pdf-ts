@@ -1,0 +1,78 @@
+name: Build PDFium WASM
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'WASM variant to build'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - full
+          - lite
+          - both
+  push:
+    branches: [main]
+    paths:
+      - 'pdfium-build/**'
+
+jobs:
+  build:
+    name: Build PDFium WASM
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # 3 hours - PDFium build takes a long time
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build PDFium WASM in Docker
+        run: |
+          # Create output directory
+          mkdir -p src/pdfium/wasm
+
+          # Build Docker image
+          docker build -t pdfium-builder ./pdfium-build
+
+          # Run build (output to src/pdfium/wasm)
+          docker run --rm -v ${{ github.workspace }}/src/pdfium/wasm:/output pdfium-builder
+
+      - name: List build artifacts
+        run: |
+          echo "Build artifacts:"
+          ls -la src/pdfium/wasm/
+          echo ""
+          echo "File sizes:"
+          du -sh src/pdfium/wasm/*
+
+      - name: Upload WASM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdfium-wasm
+          path: src/pdfium/wasm/
+          retention-days: 30
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update PDFium WASM build'
+          title: 'chore: Update PDFium WASM build'
+          body: |
+            This PR updates the PDFium WASM build artifacts.
+
+            ## Changes
+            - Updated `pdfium-full.js` and `pdfium-full.wasm` (with embedded CJK fonts)
+            - Updated `pdfium-lite.js` and `pdfium-lite.wasm` (without fonts)
+            - Updated TypeScript type definitions
+
+            ## Build Info
+            - Triggered by: ${{ github.event_name }}
+            - PDFium version: chromium/6721
+            - Emscripten version: 3.1.51
+          branch: update-pdfium-wasm
+          delete-branch: true
+          add-paths: |
+            src/pdfium/wasm/*
