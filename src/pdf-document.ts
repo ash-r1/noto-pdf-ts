@@ -24,6 +24,27 @@ import type {
 import { PdfError } from './types.js';
 
 /**
+ * Converts BGRA pixel data to RGBA by swapping red and blue channels.
+ *
+ * PDFium renders in BGRA format, but most image libraries (including sharp)
+ * expect RGBA format.
+ *
+ * @param bgra - BGRA pixel data
+ * @returns RGBA pixel data
+ * @internal
+ */
+function convertBgraToRgba(bgra: Uint8Array): Uint8Array {
+  const rgba = new Uint8Array(bgra.length);
+  for (let i = 0; i < bgra.length; i += 4) {
+    rgba[i] = bgra[i + 2] as number; // R <- B
+    rgba[i + 1] = bgra[i + 1] as number; // G <- G
+    rgba[i + 2] = bgra[i] as number; // B <- R
+    rgba[i + 3] = bgra[i + 3] as number; // A <- A
+  }
+  return rgba;
+}
+
+/**
  * Cached PDFium library instance.
  * @internal
  */
@@ -427,12 +448,15 @@ export class PdfDocumentImpl implements PdfDocument {
       // Memory is managed internally and released when PDFiumDocument.destroy() is called.
       const page = this.document.getPage(pageNumber - 1);
 
-      // Render to raw RGBA bitmap (synchronous in our implementation)
+      // Render to raw BGRA bitmap (PDFium native format)
       const image = page.render({ render: 'bitmap', scale });
       const { data, width, height } = image;
 
+      // Convert BGRA to RGBA (swap red and blue channels)
+      const rgbaData = convertBgraToRgba(data);
+
       // Convert raw RGBA to image format using sharp
-      const sharpInstance = sharp(Buffer.from(data), {
+      const sharpInstance = sharp(Buffer.from(rgbaData), {
         raw: {
           width,
           height,
