@@ -2,39 +2,25 @@
 #
 # PDFium WASM build script.
 #
-# Builds PDFium as a single WebAssembly module without embedded fonts.
-# Fonts are loaded via JS using the FS module at runtime.
+# Downloads pre-built PDFium WASM from paulocoutinhox/pdfium-lib
+# and creates the JS wrapper for ES modules.
 #
 # Usage:
-#   ./build.sh [--skip-fetch] [--skip-build] [--output-dir DIR]
+#   ./build.sh [--output-dir DIR]
 #
 
 set -e
 
 # Configuration
-PDFIUM_VERSION="chromium/6721"
-BUILD_DIR="/build"
+PDFIUM_LIB_VERSION="7623"
+PDFIUM_LIB_URL="https://github.com/paulocoutinhox/pdfium-lib/releases/download/${PDFIUM_LIB_VERSION}/wasm.tgz"
 OUTPUT_DIR="/output"
-SKIP_FETCH=false
-SKIP_BUILD=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --skip-fetch)
-      SKIP_FETCH=true
-      shift
-      ;;
-    --skip-build)
-      SKIP_BUILD=true
-      shift
-      ;;
     --output-dir)
       OUTPUT_DIR="$2"
-      shift 2
-      ;;
-    --build-dir)
-      BUILD_DIR="$2"
       shift 2
       ;;
     *)
@@ -44,183 +30,118 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-PDFIUM_DIR="$BUILD_DIR/pdfium"
-OUT_DIR="$PDFIUM_DIR/out/wasm"
+WORK_DIR="/tmp/pdfium-wasm-build"
 
-# Exported PDFium functions
-EXPORTED_FUNCTIONS='[
-  "_PDFium_Init",
-  "_FPDF_InitLibrary",
-  "_FPDF_InitLibraryWithConfig",
-  "_FPDF_DestroyLibrary",
-  "_FPDF_SetSandBoxPolicy",
-  "_FPDF_LoadDocument",
-  "_FPDF_LoadMemDocument",
-  "_FPDF_CloseDocument",
-  "_FPDF_GetLastError",
-  "_FPDF_GetPageCount",
-  "_FPDF_LoadPage",
-  "_FPDF_ClosePage",
-  "_FPDF_GetPageWidth",
-  "_FPDF_GetPageHeight",
-  "_FPDF_GetPageWidthF",
-  "_FPDF_GetPageHeightF",
-  "_FPDF_RenderPageBitmap",
-  "_FPDF_RenderPageBitmapWithMatrix",
-  "_FPDF_FFLDraw",
-  "_FPDFBitmap_Create",
-  "_FPDFBitmap_CreateEx",
-  "_FPDFBitmap_Destroy",
-  "_FPDFBitmap_FillRect",
-  "_FPDFBitmap_GetBuffer",
-  "_FPDFBitmap_GetWidth",
-  "_FPDFBitmap_GetHeight",
-  "_FPDFBitmap_GetStride",
-  "_FPDFBitmap_GetFormat",
-  "_FPDFText_LoadPage",
-  "_FPDFText_ClosePage",
-  "_FPDFText_CountChars",
-  "_FPDFText_GetText",
-  "_FPDFText_GetUnicode",
-  "_FPDFText_GetFontSize",
-  "_FPDFText_GetCharBox",
-  "_FPDFPage_CountObjects",
-  "_FPDFPage_GetObject",
-  "_FPDFPageObj_GetType",
-  "_FPDFImageObj_GetBitmap",
-  "_FPDFImageObj_GetRenderedBitmap",
-  "_FPDFImageObj_GetImagePixelSize",
-  "_FPDFImageObj_GetImageDataRaw",
-  "_FPDFImageObj_GetImageFilterCount",
-  "_FPDFImageObj_GetImageFilter",
-  "_FPDFDOC_InitFormFillEnvironment",
-  "_FPDFDOC_ExitFormFillEnvironment",
-  "_FORM_OnAfterLoadPage",
-  "_FORM_OnBeforeClosePage",
-  "_malloc",
-  "_free"
-]'
+echo "PDFium WASM Build"
+echo "================="
+echo "Source: paulocoutinhox/pdfium-lib v${PDFIUM_LIB_VERSION}"
+echo "Output dir: $OUTPUT_DIR"
+echo ""
 
-# Exported runtime methods
-EXPORTED_RUNTIME_METHODS='[
-  "ccall",
-  "cwrap",
-  "wasmExports",
-  "HEAP8",
-  "HEAP16",
-  "HEAP32",
-  "HEAPU8",
-  "HEAPU16",
-  "HEAPU32",
-  "HEAPF32",
-  "HEAPF64",
-  "addFunction",
-  "removeFunction",
-  "setValue",
-  "getValue",
-  "UTF8ToString",
-  "stringToUTF8",
-  "lengthBytesUTF8",
-  "FS"
-]'
+# Download pre-built WASM
+download_pdfium() {
+  echo "Downloading PDFium WASM from pdfium-lib..."
 
-# Fetch PDFium source
-fetch_pdfium() {
-  if [ -d "$PDFIUM_DIR" ]; then
-    echo "PDFium directory already exists: $PDFIUM_DIR"
-    return
-  fi
+  mkdir -p "$WORK_DIR"
+  cd "$WORK_DIR"
 
-  echo "Fetching PDFium source..."
+  curl -L -o wasm.tgz "$PDFIUM_LIB_URL"
+  tar -xzf wasm.tgz
 
-  # Create .gclient file
-  cat > "$BUILD_DIR/.gclient" << EOF
-solutions = [
-  {
-    "name": "pdfium",
-    "url": "https://pdfium.googlesource.com/pdfium.git@${PDFIUM_VERSION}",
-    "deps_file": "DEPS",
-    "managed": False,
-    "custom_deps": {},
-  },
-]
-target_os = []
-EOF
-
-  # Sync PDFium
-  cd "$BUILD_DIR"
-  gclient sync --no-history
+  echo "Downloaded and extracted PDFium WASM"
+  ls -la "$WORK_DIR"
 }
 
-# Configure PDFium build
-configure_pdfium() {
-  echo "Configuring PDFium build..."
-
-  mkdir -p "$OUT_DIR"
-
-  # Create args.gn
-  cat > "$OUT_DIR/args.gn" << 'EOF'
-is_debug = false
-pdf_is_standalone = true
-pdf_enable_xfa = false
-pdf_enable_v8 = false
-is_component_build = false
-clang_use_chrome_plugins = false
-use_custom_libcxx = false
-pdf_use_skia = false
-pdf_bundle_freetype = true
-is_clang = true
-target_os = "wasm"
-target_cpu = "wasm"
-EOF
-
-  # Run gn gen
-  cd "$PDFIUM_DIR"
-  gn gen "$OUT_DIR"
-}
-
-# Build PDFium
-build_pdfium() {
-  echo "Building PDFium..."
-  cd "$PDFIUM_DIR"
-  ninja -C "$OUT_DIR" pdfium
-}
-
-# Link WASM
-link_wasm() {
-  echo "Linking WASM module..."
+# Create ES module wrapper
+create_wrapper() {
+  echo "Creating ES module wrapper..."
 
   mkdir -p "$OUTPUT_DIR"
-  cd "$OUTPUT_DIR"
 
-  # Remove newlines from JSON arrays for command line
-  FUNCS=$(echo "$EXPORTED_FUNCTIONS" | tr -d '\n' | tr -s ' ')
-  METHODS=$(echo "$EXPORTED_RUNTIME_METHODS" | tr -d '\n' | tr -s ' ')
+  # Check what files we have
+  echo "Files in WORK_DIR:"
+  find "$WORK_DIR" -type f -name "*.js" -o -name "*.wasm" | head -20
 
-  em++ \
-    -s "EXPORTED_FUNCTIONS=${FUNCS}" \
-    -s "EXPORTED_RUNTIME_METHODS=${METHODS}" \
-    -s WASM=1 \
-    -s MODULARIZE=1 \
-    -s EXPORT_ES6=1 \
-    -s EXPORT_NAME=loadPdfium \
-    -s ALLOW_MEMORY_GROWTH=1 \
-    -s INITIAL_MEMORY=33554432 \
-    -s MAXIMUM_MEMORY=536870912 \
-    -s FORCE_FILESYSTEM=1 \
-    -s ALLOW_TABLE_GROWTH=1 \
-    -s ASSERTIONS=0 \
-    -s USE_ZLIB=1 \
-    -s USE_LIBJPEG=1 \
-    -s USE_LIBPNG=1 \
-    -O3 \
-    --closure 0 \
-    -o pdfium.js \
-    "$OUT_DIR/obj/libpdfium.a" \
-    -I "$PDFIUM_DIR" \
-    -I "$PDFIUM_DIR/public"
+  # Find the WASM and JS files
+  WASM_FILE=$(find "$WORK_DIR" -name "*.wasm" | head -1)
+  JS_FILE=$(find "$WORK_DIR" -name "pdfium.js" -o -name "*.js" | head -1)
 
-  echo "WASM module created: $OUTPUT_DIR/pdfium.wasm"
+  if [ -z "$WASM_FILE" ]; then
+    echo "Error: No WASM file found"
+    exit 1
+  fi
+
+  echo "Found WASM: $WASM_FILE"
+  echo "Found JS: $JS_FILE"
+
+  # Copy WASM file
+  cp "$WASM_FILE" "$OUTPUT_DIR/pdfium.wasm"
+
+  # If there's already a JS file, use it as base
+  if [ -n "$JS_FILE" ] && [ -f "$JS_FILE" ]; then
+    # Check if it's already ES module compatible
+    if grep -q "export" "$JS_FILE"; then
+      cp "$JS_FILE" "$OUTPUT_DIR/pdfium.js"
+    else
+      # Wrap in ES module
+      create_es_wrapper "$JS_FILE"
+    fi
+  else
+    # Create minimal ES module wrapper
+    create_minimal_wrapper
+  fi
+}
+
+# Create ES module wrapper from existing JS
+create_es_wrapper() {
+  local SOURCE_JS="$1"
+
+  cat > "$OUTPUT_DIR/pdfium.js" << 'WRAPPER_START'
+// PDFium WASM ES Module Wrapper
+// Based on paulocoutinhox/pdfium-lib
+
+WRAPPER_START
+
+  cat "$SOURCE_JS" >> "$OUTPUT_DIR/pdfium.js"
+
+  # Add ES module export if not present
+  if ! grep -q "export default" "$OUTPUT_DIR/pdfium.js"; then
+    echo "" >> "$OUTPUT_DIR/pdfium.js"
+    echo "export default loadPdfium;" >> "$OUTPUT_DIR/pdfium.js"
+  fi
+}
+
+# Create minimal ES module wrapper
+create_minimal_wrapper() {
+  cat > "$OUTPUT_DIR/pdfium.js" << 'EOF'
+// PDFium WASM ES Module Wrapper
+// Based on paulocoutinhox/pdfium-lib
+
+var loadPdfium = (() => {
+  var _scriptDir = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : undefined;
+  if (typeof __filename !== 'undefined') _scriptDir = _scriptDir || __filename;
+  return function(moduleArg = {}) {
+    var Module = moduleArg;
+
+    Module.locateFile = Module.locateFile || function(path) {
+      if (path.endsWith('.wasm')) {
+        if (typeof _scriptDir !== 'undefined') {
+          return _scriptDir.replace(/\.js$/, '.wasm');
+        }
+        return 'pdfium.wasm';
+      }
+      return path;
+    };
+
+    return new Promise((resolve, reject) => {
+      // This is a placeholder - the actual pdfium-lib JS handles this
+      reject(new Error('PDFium WASM wrapper needs the actual pdfium-lib JS file'));
+    });
+  };
+})();
+
+export default loadPdfium;
+EOF
 }
 
 # Create TypeScript types
@@ -230,7 +151,7 @@ create_types() {
   cat > "$OUTPUT_DIR/pdfium.d.ts" << 'EOF'
 /**
  * PDFium WASM module types.
- * Auto-generated by build.sh
+ * Based on paulocoutinhox/pdfium-lib
  */
 
 export interface EmscriptenFS {
@@ -340,28 +261,13 @@ EOF
 
 # Main
 main() {
-  echo "PDFium WASM Build"
-  echo "================="
-  echo "PDFium version: $PDFIUM_VERSION"
-  echo "Build dir: $BUILD_DIR"
-  echo "Output dir: $OUTPUT_DIR"
-  echo ""
-
-  if [ "$SKIP_FETCH" = false ]; then
-    fetch_pdfium
-  fi
-
-  if [ "$SKIP_BUILD" = false ]; then
-    configure_pdfium
-    build_pdfium
-  fi
-
-  link_wasm
+  download_pdfium
+  create_wrapper
   create_types
 
   echo ""
   echo "Build complete!"
-  echo "Output files in $OUTPUT_DIR:"
+  echo "Output files:"
   ls -lh "$OUTPUT_DIR"
 }
 
