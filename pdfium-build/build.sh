@@ -1,0 +1,368 @@
+#!/bin/bash
+#
+# PDFium WASM build script.
+#
+# Builds PDFium as a single WebAssembly module without embedded fonts.
+# Fonts are loaded via JS using the FS module at runtime.
+#
+# Usage:
+#   ./build.sh [--skip-fetch] [--skip-build] [--output-dir DIR]
+#
+
+set -e
+
+# Configuration
+PDFIUM_VERSION="chromium/6721"
+BUILD_DIR="/build"
+OUTPUT_DIR="/output"
+SKIP_FETCH=false
+SKIP_BUILD=false
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --skip-fetch)
+      SKIP_FETCH=true
+      shift
+      ;;
+    --skip-build)
+      SKIP_BUILD=true
+      shift
+      ;;
+    --output-dir)
+      OUTPUT_DIR="$2"
+      shift 2
+      ;;
+    --build-dir)
+      BUILD_DIR="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
+
+PDFIUM_DIR="$BUILD_DIR/pdfium"
+OUT_DIR="$PDFIUM_DIR/out/wasm"
+
+# Exported PDFium functions
+EXPORTED_FUNCTIONS='[
+  "_PDFium_Init",
+  "_FPDF_InitLibrary",
+  "_FPDF_InitLibraryWithConfig",
+  "_FPDF_DestroyLibrary",
+  "_FPDF_SetSandBoxPolicy",
+  "_FPDF_LoadDocument",
+  "_FPDF_LoadMemDocument",
+  "_FPDF_CloseDocument",
+  "_FPDF_GetLastError",
+  "_FPDF_GetPageCount",
+  "_FPDF_LoadPage",
+  "_FPDF_ClosePage",
+  "_FPDF_GetPageWidth",
+  "_FPDF_GetPageHeight",
+  "_FPDF_GetPageWidthF",
+  "_FPDF_GetPageHeightF",
+  "_FPDF_RenderPageBitmap",
+  "_FPDF_RenderPageBitmapWithMatrix",
+  "_FPDF_FFLDraw",
+  "_FPDFBitmap_Create",
+  "_FPDFBitmap_CreateEx",
+  "_FPDFBitmap_Destroy",
+  "_FPDFBitmap_FillRect",
+  "_FPDFBitmap_GetBuffer",
+  "_FPDFBitmap_GetWidth",
+  "_FPDFBitmap_GetHeight",
+  "_FPDFBitmap_GetStride",
+  "_FPDFBitmap_GetFormat",
+  "_FPDFText_LoadPage",
+  "_FPDFText_ClosePage",
+  "_FPDFText_CountChars",
+  "_FPDFText_GetText",
+  "_FPDFText_GetUnicode",
+  "_FPDFText_GetFontSize",
+  "_FPDFText_GetCharBox",
+  "_FPDFPage_CountObjects",
+  "_FPDFPage_GetObject",
+  "_FPDFPageObj_GetType",
+  "_FPDFImageObj_GetBitmap",
+  "_FPDFImageObj_GetRenderedBitmap",
+  "_FPDFImageObj_GetImagePixelSize",
+  "_FPDFImageObj_GetImageDataRaw",
+  "_FPDFImageObj_GetImageFilterCount",
+  "_FPDFImageObj_GetImageFilter",
+  "_FPDFDOC_InitFormFillEnvironment",
+  "_FPDFDOC_ExitFormFillEnvironment",
+  "_FORM_OnAfterLoadPage",
+  "_FORM_OnBeforeClosePage",
+  "_malloc",
+  "_free"
+]'
+
+# Exported runtime methods
+EXPORTED_RUNTIME_METHODS='[
+  "ccall",
+  "cwrap",
+  "wasmExports",
+  "HEAP8",
+  "HEAP16",
+  "HEAP32",
+  "HEAPU8",
+  "HEAPU16",
+  "HEAPU32",
+  "HEAPF32",
+  "HEAPF64",
+  "addFunction",
+  "removeFunction",
+  "setValue",
+  "getValue",
+  "UTF8ToString",
+  "stringToUTF8",
+  "lengthBytesUTF8",
+  "FS"
+]'
+
+# Fetch PDFium source
+fetch_pdfium() {
+  if [ -d "$PDFIUM_DIR" ]; then
+    echo "PDFium directory already exists: $PDFIUM_DIR"
+    return
+  fi
+
+  echo "Fetching PDFium source..."
+
+  # Create .gclient file
+  cat > "$BUILD_DIR/.gclient" << EOF
+solutions = [
+  {
+    "name": "pdfium",
+    "url": "https://pdfium.googlesource.com/pdfium.git@${PDFIUM_VERSION}",
+    "deps_file": "DEPS",
+    "managed": False,
+    "custom_deps": {},
+  },
+]
+target_os = []
+EOF
+
+  # Sync PDFium
+  cd "$BUILD_DIR"
+  gclient sync --no-history
+}
+
+# Configure PDFium build
+configure_pdfium() {
+  echo "Configuring PDFium build..."
+
+  mkdir -p "$OUT_DIR"
+
+  # Create args.gn
+  cat > "$OUT_DIR/args.gn" << 'EOF'
+is_debug = false
+pdf_is_standalone = true
+pdf_enable_xfa = false
+pdf_enable_v8 = false
+is_component_build = false
+clang_use_chrome_plugins = false
+use_custom_libcxx = false
+pdf_use_skia = false
+pdf_bundle_freetype = true
+is_clang = true
+target_os = "wasm"
+target_cpu = "wasm"
+EOF
+
+  # Run gn gen
+  cd "$PDFIUM_DIR"
+  gn gen "$OUT_DIR"
+}
+
+# Build PDFium
+build_pdfium() {
+  echo "Building PDFium..."
+  cd "$PDFIUM_DIR"
+  ninja -C "$OUT_DIR" pdfium
+}
+
+# Link WASM
+link_wasm() {
+  echo "Linking WASM module..."
+
+  mkdir -p "$OUTPUT_DIR"
+  cd "$OUTPUT_DIR"
+
+  # Remove newlines from JSON arrays for command line
+  FUNCS=$(echo "$EXPORTED_FUNCTIONS" | tr -d '\n' | tr -s ' ')
+  METHODS=$(echo "$EXPORTED_RUNTIME_METHODS" | tr -d '\n' | tr -s ' ')
+
+  em++ \
+    -s "EXPORTED_FUNCTIONS=${FUNCS}" \
+    -s "EXPORTED_RUNTIME_METHODS=${METHODS}" \
+    -s WASM=1 \
+    -s MODULARIZE=1 \
+    -s EXPORT_ES6=1 \
+    -s EXPORT_NAME=loadPdfium \
+    -s ALLOW_MEMORY_GROWTH=1 \
+    -s INITIAL_MEMORY=33554432 \
+    -s MAXIMUM_MEMORY=536870912 \
+    -s FORCE_FILESYSTEM=1 \
+    -s ALLOW_TABLE_GROWTH=1 \
+    -s ASSERTIONS=0 \
+    -s USE_ZLIB=1 \
+    -s USE_LIBJPEG=1 \
+    -s USE_LIBPNG=1 \
+    -O3 \
+    --closure 0 \
+    -o pdfium.js \
+    "$OUT_DIR/obj/libpdfium.a" \
+    -I "$PDFIUM_DIR" \
+    -I "$PDFIUM_DIR/public"
+
+  echo "WASM module created: $OUTPUT_DIR/pdfium.wasm"
+}
+
+# Create TypeScript types
+create_types() {
+  echo "Creating TypeScript types..."
+
+  cat > "$OUTPUT_DIR/pdfium.d.ts" << 'EOF'
+/**
+ * PDFium WASM module types.
+ * Auto-generated by build.sh
+ */
+
+export interface EmscriptenFS {
+  mkdir(path: string): void;
+  writeFile(path: string, data: Uint8Array | string): void;
+  readFile(path: string, opts?: { encoding?: string }): Uint8Array | string;
+  unlink(path: string): void;
+  rmdir(path: string): void;
+  readdir(path: string): string[];
+  stat(path: string): { mode: number };
+  isDir(mode: number): boolean;
+  isFile(mode: number): boolean;
+}
+
+export interface PDFiumModule {
+  HEAPU8: Uint8Array;
+  HEAP32: Int32Array;
+  FS: EmscriptenFS;
+  wasmExports: {
+    malloc(size: number): number;
+    free(ptr: number): void;
+  };
+  _PDFium_Init(): void;
+  _FPDF_InitLibrary(): void;
+  _FPDF_InitLibraryWithConfig(config: number): void;
+  _FPDF_DestroyLibrary(): void;
+  _FPDF_LoadMemDocument(data: number, size: number, password: number): number;
+  _FPDF_CloseDocument(document: number): void;
+  _FPDF_GetLastError(): number;
+  _FPDF_GetPageCount(document: number): number;
+  _FPDF_LoadPage(document: number, pageIndex: number): number;
+  _FPDF_ClosePage(page: number): void;
+  _FPDF_GetPageWidth(page: number): number;
+  _FPDF_GetPageHeight(page: number): number;
+  _FPDFBitmap_CreateEx(
+    width: number,
+    height: number,
+    format: number,
+    buffer: number,
+    stride: number
+  ): number;
+  _FPDFBitmap_FillRect(
+    bitmap: number,
+    left: number,
+    top: number,
+    width: number,
+    height: number,
+    color: number
+  ): void;
+  _FPDF_RenderPageBitmap(
+    bitmap: number,
+    page: number,
+    startX: number,
+    startY: number,
+    sizeX: number,
+    sizeY: number,
+    rotate: number,
+    flags: number
+  ): void;
+  _FPDFBitmap_Destroy(bitmap: number): void;
+  _FPDFBitmap_GetBuffer(bitmap: number): number;
+  _FPDFText_LoadPage(page: number): number;
+  _FPDFText_ClosePage(textPage: number): void;
+  _FPDFText_CountChars(textPage: number): number;
+  _FPDFText_GetText(
+    textPage: number,
+    startIndex: number,
+    count: number,
+    buffer: number
+  ): number;
+  ccall(
+    ident: string,
+    returnType: string | null,
+    argTypes: string[],
+    args: unknown[]
+  ): unknown;
+  cwrap(
+    ident: string,
+    returnType: string | null,
+    argTypes: string[]
+  ): (...args: unknown[]) => unknown;
+  setValue(ptr: number, value: number, type: string): void;
+  getValue(ptr: number, type: string): number;
+  UTF8ToString(ptr: number): string;
+  stringToUTF8(str: string, outPtr: number, maxBytes: number): void;
+  lengthBytesUTF8(str: string): number;
+}
+
+export interface LoadPdfiumOptions {
+  wasmBinary?: ArrayBuffer;
+  locateFile?: (path: string) => string;
+  instantiateWasm?: (
+    imports: WebAssembly.Imports,
+    successCallback: (module: WebAssembly.Instance) => void
+  ) => WebAssembly.Exports;
+}
+
+declare function loadPdfium(
+  options?: LoadPdfiumOptions
+): Promise<PDFiumModule>;
+
+export default loadPdfium;
+EOF
+
+  echo "TypeScript types created: $OUTPUT_DIR/pdfium.d.ts"
+}
+
+# Main
+main() {
+  echo "PDFium WASM Build"
+  echo "================="
+  echo "PDFium version: $PDFIUM_VERSION"
+  echo "Build dir: $BUILD_DIR"
+  echo "Output dir: $OUTPUT_DIR"
+  echo ""
+
+  if [ "$SKIP_FETCH" = false ]; then
+    fetch_pdfium
+  fi
+
+  if [ "$SKIP_BUILD" = false ]; then
+    configure_pdfium
+    build_pdfium
+  fi
+
+  link_wasm
+  create_types
+
+  echo ""
+  echo "Build complete!"
+  echo "Output files in $OUTPUT_DIR:"
+  ls -lh "$OUTPUT_DIR"
+}
+
+main

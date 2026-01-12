@@ -8,10 +8,10 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
+# Note: python3 is required for depot_tools (gclient)
 RUN apt-get update && apt-get install -y \
     git \
     python3 \
-    python3-pip \
     curl \
     wget \
     xz-utils \
@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     lsb-release \
     sudo \
-    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Install depot_tools
@@ -39,12 +38,12 @@ ENV PATH="/opt/emsdk:/opt/emsdk/upstream/emscripten:${PATH}"
 
 WORKDIR /build
 
-# Copy build scripts
-COPY build.py /build/
-COPY config.py /build/
+# Copy build script
+COPY build.sh /build/
+RUN chmod +x /build/build.sh
 
 # Output directory
 VOLUME ["/output"]
 
 # Entry point
-CMD ["python3", "/build/build.py", "--output-dir", "/output"]
+CMD ["/build/build.sh", "--output-dir", "/output"]
