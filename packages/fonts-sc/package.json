@@ -1,0 +1,49 @@
+{
+  "name": "@noto-pdf-ts/fonts-sc",
+  "version": "0.0.1-alpha.0",
+  "description": "Noto Sans Simplified Chinese font for noto-pdf-ts",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsup && pnpm run copy-assets",
+    "copy-assets": "node ../../scripts/copy-assets.js fonts-sc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "license": "OFL-1.1",
+  "peerDependencies": {
+    "@noto-pdf-ts/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.2"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ash-r1/noto-pdf-ts.git",
+    "directory": "packages/fonts-sc"
+  },
+  "bugs": {
+    "url": "https://github.com/ash-r1/noto-pdf-ts/issues"
+  },
+  "homepage": "https://github.com/ash-r1/noto-pdf-ts#readme"
+}

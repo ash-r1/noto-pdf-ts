@@ -1,217 +1,231 @@
 # noto-pdf-ts
 
-[日本語版 README](./README_ja.md)
-
-A simple and efficient PDF conversion library for Node.js. Convert PDF pages to images (JPEG/PNG).
+A simple and efficient PDF rendering library for Node.js. Convert PDF pages to images (JPEG/PNG) with built-in CJK (Chinese, Japanese, Korean) font support.
 
 ## Features
 
-- Simple API - Open PDFs with `openPdf()` and convert to images with `renderPages()`
-- Memory efficient - Process one page at a time using AsyncGenerator
-- Japanese/CJK font support - Automatic CMap detection from pdfjs-dist
-- Full TypeScript support - Includes type definitions
-- ESM / CommonJS compatible
-- `await using` syntax support (ES2024 AsyncDisposable)
+- **Simple API** - Open PDFs with `openPdf()` and render pages with `renderPages()`
+- **Memory Efficient** - Process pages one at a time using AsyncGenerator
+- **CJK Font Support** - Includes Noto Sans CJK fonts for Japanese, Korean, and Chinese text
+- **TypeScript Native** - Full type definitions included
+- **ESM / CommonJS** - Works with both module systems
+- **Modern** - Supports `await using` syntax (ES2024 AsyncDisposable)
+
+## Packages
+
+This is a monorepo containing multiple packages:
+
+| Package | Description | Version |
+|---------|-------------|---------|
+| [@noto-pdf-ts/core](./packages/core) | Core PDF rendering library | [![npm](https://img.shields.io/npm/v/@noto-pdf-ts/core/alpha)](https://www.npmjs.com/package/@noto-pdf-ts/core) |
+| [@noto-pdf-ts/fonts-jp](./packages/fonts-jp) | Noto Sans Japanese font | [![npm](https://img.shields.io/npm/v/@noto-pdf-ts/fonts-jp/alpha)](https://www.npmjs.com/package/@noto-pdf-ts/fonts-jp) |
+| [@noto-pdf-ts/fonts-kr](./packages/fonts-kr) | Noto Sans Korean font | [![npm](https://img.shields.io/npm/v/@noto-pdf-ts/fonts-kr/alpha)](https://www.npmjs.com/package/@noto-pdf-ts/fonts-kr) |
+| [@noto-pdf-ts/fonts-sc](./packages/fonts-sc) | Noto Sans Simplified Chinese font | [![npm](https://img.shields.io/npm/v/@noto-pdf-ts/fonts-sc/alpha)](https://www.npmjs.com/package/@noto-pdf-ts/fonts-sc) |
+| [@noto-pdf-ts/fonts-tc](./packages/fonts-tc) | Noto Sans Traditional Chinese font | [![npm](https://img.shields.io/npm/v/@noto-pdf-ts/fonts-tc/alpha)](https://www.npmjs.com/package/@noto-pdf-ts/fonts-tc) |
+| [@noto-pdf-ts/fonts-cjk](./packages/fonts-cjk) | All CJK fonts (Japanese, Korean, SC, TC) | [![npm](https://img.shields.io/npm/v/@noto-pdf-ts/fonts-cjk/alpha)](https://www.npmjs.com/package/@noto-pdf-ts/fonts-cjk) |
 
 ## Installation
 
-> **Note:** This package is currently in alpha. The API may change in future releases.
+> **Note:** This package is currently in alpha. APIs may change in future releases.
+
+### Basic Installation
 
 ```bash
-# Install the latest alpha version
-npm install noto-pdf-ts@alpha
+# Core library
+npm install @noto-pdf-ts/core@alpha
+
+# With specific language support
+npm install @noto-pdf-ts/core@alpha @noto-pdf-ts/fonts-jp@alpha
+
+# Or with all CJK fonts
+npm install @noto-pdf-ts/core@alpha @noto-pdf-ts/fonts-cjk@alpha
 ```
 
-### Required Dependencies
+### Font Packages
 
-This library requires [canvas](https://github.com/Automattic/node-canvas) as a peer dependency. Install the following system dependencies:
+Choose the font package(s) you need:
 
-**macOS:**
-```bash
-brew install pkg-config cairo pango libpng jpeg giflib librsvg
-```
+- `@noto-pdf-ts/fonts-jp` - Japanese (Hiragana, Katakana, Kanji)
+- `@noto-pdf-ts/fonts-kr` - Korean (Hangul)
+- `@noto-pdf-ts/fonts-sc` - Simplified Chinese (汉字)
+- `@noto-pdf-ts/fonts-tc` - Traditional Chinese (漢字)
+- `@noto-pdf-ts/fonts-cjk` - All of the above
 
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
-```
-
-**Alpine Linux:**
-```bash
-apk add build-base g++ cairo-dev jpeg-dev pango-dev giflib-dev
-```
-
-## Usage
-
-### Basic Usage
+## Quick Start
 
 ```typescript
-import { openPdf } from 'noto-pdf-ts'
+import { init, openPdf } from '@noto-pdf-ts/core'
+import loadFontJp from '@noto-pdf-ts/fonts-jp'
 import fs from 'node:fs/promises'
 
-// Open a PDF
-const pdf = await openPdf('/path/to/document.pdf')
-console.log(`Page count: ${pdf.pageCount}`)
+// Initialize with Japanese font
+await init({
+  fonts: [await loadFontJp()],
+})
 
-// Convert all pages to images
+// Open and render PDF
+const pdf = await openPdf('/path/to/document.pdf')
+console.log(`Pages: ${pdf.pageCount}`)
+
 for await (const page of pdf.renderPages({ format: 'jpeg', scale: 1.5 })) {
-  console.log(`Converting page ${page.pageNumber}/${page.totalPages}...`)
+  console.log(`Rendering page ${page.pageNumber}/${page.totalPages}...`)
   await fs.writeFile(`page-${page.pageNumber}.jpg`, page.buffer)
 }
 
-// Always close when done
 await pdf.close()
 ```
 
-### await using Syntax (ES2024)
+### Using `await using` (ES2024)
 
 ```typescript
-import { openPdf } from 'noto-pdf-ts'
+import { init, openPdf } from '@noto-pdf-ts/core'
+import loadFontCjk from '@noto-pdf-ts/fonts-cjk'
 
-// Using await using automatically closes the PDF
+await init({ fonts: [await loadFontCjk()] })
+
+// Automatically closes PDF when scope ends
 await using pdf = await openPdf('/path/to/document.pdf')
 
 for await (const page of pdf.renderPages()) {
-  // ...
+  // Process pages...
 }
-// Automatically closed when scope ends
 ```
 
 ### Convenience Functions
 
 ```typescript
-import { renderPdfPages, getPageCount } from 'noto-pdf-ts'
+import { renderPdfPages, getPageCount } from '@noto-pdf-ts/core'
 
-// Convert all pages in one line (auto-closes)
+// Render all pages in one line (auto-close)
 for await (const page of renderPdfPages('/path/to/document.pdf', { scale: 2 })) {
   await fs.writeFile(`page-${page.pageNumber}.jpg`, page.buffer)
 }
 
-// Get only the page count
+// Just get page count
 const count = await getPageCount('/path/to/document.pdf')
 console.log(`${count} pages`)
 ```
 
-### Various Input Formats
+## API Reference
+
+See the [core package documentation](./packages/core) for detailed API documentation.
+
+## Migration Guide (v0.x → v1.x)
+
+If you're upgrading from the previous version of `noto-pdf-ts`, here are the breaking changes:
+
+### 1. Package Name Change
 
 ```typescript
+// Before (v0.x)
 import { openPdf } from 'noto-pdf-ts'
 
-// File path
-const pdf1 = await openPdf('/path/to/document.pdf')
-
-// Buffer
-const buffer = await fs.readFile('/path/to/document.pdf')
-const pdf2 = await openPdf(buffer)
-
-// Uint8Array
-const response = await fetch('https://example.com/document.pdf')
-const data = new Uint8Array(await response.arrayBuffer())
-const pdf3 = await openPdf(data)
-
-// Password-protected PDF
-const pdf4 = await openPdf('/path/to/encrypted.pdf', { password: 'secret' })
+// After (v1.x)
+import { openPdf } from '@noto-pdf-ts/core'
 ```
 
-### Converting Specific Pages
+### 2. Font Installation Required
+
+```bash
+# Before (v0.x) - fonts were bundled
+npm install noto-pdf-ts@alpha
+
+# After (v1.x) - install fonts separately
+npm install @noto-pdf-ts/core@alpha @noto-pdf-ts/fonts-jp@alpha
+```
+
+### 3. Initialization Required
 
 ```typescript
-// Convert a single page
-const page = await pdf.renderPage(1)
+// Before (v0.x) - no initialization needed
+import { openPdf } from 'noto-pdf-ts'
+const pdf = await openPdf('document.pdf')
 
-// Specify page numbers
-for await (const page of pdf.renderPages({ pages: [1, 3, 5] })) {
-  // Converts only pages 1, 3, 5
-}
+// After (v1.x) - must initialize with fonts
+import { init, openPdf } from '@noto-pdf-ts/core'
+import loadFontJp from '@noto-pdf-ts/fonts-jp'
 
-// Specify page range
-for await (const page of pdf.renderPages({ pages: { start: 2, end: 4 } })) {
-  // Converts pages 2-4
-}
+await init({ fonts: [await loadFontJp()] })
+const pdf = await openPdf('document.pdf')
 ```
 
-### Rendering Options
+### 4. Entry Point Consolidation
 
 ```typescript
-const options = {
-  scale: 2.0,      // Scale factor (default: 1.5)
-  format: 'png',   // 'jpeg' or 'png' (default: 'jpeg')
-  quality: 0.9,    // JPEG quality 0-1 (default: 0.85)
-}
+// Before (v0.x) - lite entry point existed
+import { initLite } from 'noto-pdf-ts/lite'
 
-for await (const page of pdf.renderPages(options)) {
-  // ...
-}
+// After (v1.x) - single entry point
+import { init } from '@noto-pdf-ts/core'
 ```
 
-## API
+## Development
 
-### `openPdf(input, options?)`
+### Setup
 
-Opens a PDF document.
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/noto-pdf-ts.git
+cd noto-pdf-ts
 
-- `input`: `string | Buffer | Uint8Array | ArrayBuffer` - File path or binary data
-- `options.password?`: `string` - Password for encrypted PDFs
-- `options.cMapPath?`: `string` - Custom path to CMap files
-- `options.standardFontPath?`: `string` - Custom path to standard font files
+# Install dependencies
+pnpm install
 
-### `PdfDocument`
-
-```typescript
-interface PdfDocument {
-  readonly pageCount: number
-  renderPages(options?: RenderOptions): AsyncGenerator<RenderedPage>
-  renderPage(pageNumber: number, options?): Promise<RenderedPage>
-  close(): Promise<void>
-}
+# Download font files
+pnpm download-fonts
 ```
 
-### `RenderedPage`
+### Building
 
-```typescript
-interface RenderedPage {
-  pageNumber: number      // Page number (1-based)
-  totalPages: number      // Total number of pages
-  buffer: Buffer          // Image data
-  width: number           // Width in pixels
-  height: number          // Height in pixels
-}
+```bash
+# Build all packages
+pnpm build
+
+# Build specific package
+pnpm --filter @noto-pdf-ts/core build
 ```
 
-### Error Handling
+### Testing
 
-```typescript
-import { openPdf, PdfError } from 'noto-pdf-ts'
+```bash
+# Run all tests
+pnpm test
 
-try {
-  const pdf = await openPdf('/path/to/document.pdf')
-} catch (error) {
-  if (error instanceof PdfError) {
-    switch (error.code) {
-      case 'FILE_NOT_FOUND':
-        console.error('File not found')
-        break
-      case 'INVALID_PDF':
-        console.error('Invalid PDF file')
-        break
-      case 'PASSWORD_REQUIRED':
-        console.error('Password required')
-        break
-      case 'INVALID_PASSWORD':
-        console.error('Invalid password')
-        break
-      default:
-        console.error(error.message)
-    }
-  }
-}
+# Run tests for specific package
+pnpm --filter @noto-pdf-ts/core test
 ```
 
-## Requirements
+### Project Structure
 
-- Node.js >= 20.0.0
-- Native dependencies for canvas (see above)
+```
+noto-pdf-ts/
+├── packages/
+│   ├── core/           # Core rendering library
+│   ├── fonts-jp/       # Japanese fonts
+│   ├── fonts-kr/       # Korean fonts
+│   ├── fonts-sc/       # Simplified Chinese fonts
+│   ├── fonts-tc/       # Traditional Chinese fonts
+│   └── fonts-cjk/      # All CJK fonts
+├── fixtures/           # Test fixtures
+├── scripts/            # Build and utility scripts
+└── pnpm-workspace.yaml # Monorepo configuration
+```
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+The Noto Sans CJK fonts are licensed under the [SIL Open Font License 1.1](https://scripts.sil.org/OFL).
+
+## Related Projects
+
+- [PDFium](https://pdfium.googlesource.com/pdfium/) - The PDF rendering engine used by this library
+- [Noto Fonts](https://fonts.google.com/noto) - The font family used for CJK support
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+If you encounter any issues or have questions, please [open an issue](https://github.com/yourusername/noto-pdf-ts/issues) on GitHub.

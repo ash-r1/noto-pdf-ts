@@ -64,6 +64,8 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Download fonts
+        run: pnpm download-fonts
       - name: Run tests
         run: pnpm test:ci
 
@@ -80,6 +82,8 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Download fonts
+        run: pnpm download-fonts
       - name: Build
         run: pnpm build
       - name: Upload build artifacts
