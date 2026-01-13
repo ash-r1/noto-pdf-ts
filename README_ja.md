@@ -18,7 +18,7 @@ Node.js 向けのシンプルで効率的な PDF 変換ライブラリです。P
 PDFには様々なフォント形式でテキストを含めることができます：
 
 - **TrueType (.ttf)** - AppleとMicrosoftが開発した一般的なフォント形式。OSやドキュメントで広く使用されている
-- **OpenType (.otf)** - MicrosoftとAdobeが開発したTrueTypeの拡張形式。高度なタイポグラフィ機能を提供
+- **OpenType (.otf/.ttf)** - MicrosoftとAdobeが開発したTrueTypeの拡張形式。高度なタイポグラフィ機能を提供
 - **Type 1** - Adobeの古いPostScriptフォント形式
 - **CIDフォント** - CJK（中国語、日本語、韓国語）などの大規模な文字セット用に設計されたフォント
 

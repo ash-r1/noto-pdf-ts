@@ -20,7 +20,7 @@ A simple and efficient PDF conversion library for Node.js. Convert PDF pages to 
 PDFs can contain text in various font formats:
 
 - **TrueType (.ttf)** - A common font format developed by Apple and Microsoft, widely used in operating systems and documents
-- **OpenType (.otf)** - An extension of TrueType developed by Microsoft and Adobe, offering advanced typographic features
+- **OpenType (.otf/.ttf)** - An extension of TrueType developed by Microsoft and Adobe, offering advanced typographic features
 - **Type 1** - Adobe's older PostScript font format
 - **CID fonts** - Fonts designed for large character sets like CJK (Chinese, Japanese, Korean)
 
