@@ -7,11 +7,12 @@ export default defineConfig({
     'fonts/noto-cjk': 'src/fonts/noto-cjk.ts',
     cli: 'src/cli.ts',
   },
-  format: ['esm'],
+  format: ['esm', 'cjs'],
   dts: true,
   splitting: false,
   sourcemap: true,
   clean: true,
   outDir: 'dist',
+  shims: true,
   external: ['canvas', 'pdfjs-dist', 'pdf-lib', 'sharp'],
 });
