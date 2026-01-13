@@ -9,8 +9,8 @@
  * import { PDFiumLibrary } from 'noto-pdf-ts/lite'
  * import { loadNotoCJKFont } from 'noto-pdf-ts/fonts/noto-cjk'
  *
- * // Initialize PDFium library (lite variant)
- * const library = await PDFiumLibrary.initLite()
+ * // Initialize PDFium library
+ * const library = await PDFiumLibrary.init()
  *
  * // Load and register CJK fonts
  * const fontData = await loadNotoCJKFont()
