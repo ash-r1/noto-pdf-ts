@@ -115,7 +115,7 @@ jobs:
       - name: Install package in test directory
         run: |
           cd tests/integration/${{ matrix.module-type }}-test
-          npm install ../../../noto-pdf-ts-*.tgz
+          npm install --ignore-scripts ../../../noto-pdf-ts-*.tgz
       - name: Run integration test
         run: |
           cd tests/integration/${{ matrix.module-type }}-test
