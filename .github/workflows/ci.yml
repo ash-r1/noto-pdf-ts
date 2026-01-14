@@ -36,6 +36,8 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Build core (required for TypeScript project references)
+        run: pnpm --filter @noto-pdf-ts/core build
       - name: Type check
         run: pnpm typecheck
 
