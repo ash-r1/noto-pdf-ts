@@ -54,14 +54,13 @@ Choose the font package(s) you need:
 ## Quick Start
 
 ```typescript
-import { init, openPdf } from '@noto-pdf-ts/core'
+import { PDFiumLibrary, openPdf } from '@noto-pdf-ts/core'
 import loadFontJp from '@noto-pdf-ts/fonts-jp'
 import fs from 'node:fs/promises'
 
-// Initialize with Japanese font
-await init({
-  fonts: [await loadFontJp()],
-})
+// Initialize library and register Japanese font
+const library = await PDFiumLibrary.init()
+library.registerFonts([await loadFontJp()])
 
 // Open and render PDF
 const pdf = await openPdf('/path/to/document.pdf')
@@ -78,10 +77,11 @@ await pdf.close()
 ### Using `await using` (ES2024)
 
 ```typescript
-import { init, openPdf } from '@noto-pdf-ts/core'
+import { PDFiumLibrary, openPdf } from '@noto-pdf-ts/core'
 import loadFontCjk from '@noto-pdf-ts/fonts-cjk'
 
-await init({ fonts: [await loadFontCjk()] })
+const library = await PDFiumLibrary.init()
+library.registerFonts([await loadFontCjk()])
 
 // Automatically closes PDF when scope ends
 await using pdf = await openPdf('/path/to/document.pdf')
@@ -142,10 +142,11 @@ import { openPdf } from 'noto-pdf-ts'
 const pdf = await openPdf('document.pdf')
 
 // After (v1.x) - must initialize with fonts
-import { init, openPdf } from '@noto-pdf-ts/core'
+import { PDFiumLibrary, openPdf } from '@noto-pdf-ts/core'
 import loadFontJp from '@noto-pdf-ts/fonts-jp'
 
-await init({ fonts: [await loadFontJp()] })
+const library = await PDFiumLibrary.init()
+library.registerFonts([await loadFontJp()])
 const pdf = await openPdf('document.pdf')
 ```
 

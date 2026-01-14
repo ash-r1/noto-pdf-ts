@@ -160,3 +160,6 @@ fixtures/fonts/*.ttc
 
 # Temporary font download directory
 .tmp-fonts/
+
+# Integration test artifacts
+tests/integration/*/package-lock.json

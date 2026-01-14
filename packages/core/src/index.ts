@@ -24,10 +24,10 @@
  * @example
  * With CJK font support:
  * ```typescript
- * import { openPdf, PDFiumLibrary } from '@noto-pdf-ts/core'
+ * import { PDFiumLibrary, openPdf } from '@noto-pdf-ts/core'
  * import loadFontJp from '@noto-pdf-ts/fonts-jp'
  *
- * // Register fonts before rendering PDFs with CJK text
+ * // Initialize library and register Japanese font
  * const library = await PDFiumLibrary.init()
  * library.registerFonts([await loadFontJp()])
  *

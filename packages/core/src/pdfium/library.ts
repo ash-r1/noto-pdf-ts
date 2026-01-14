@@ -1,8 +1,7 @@
 /**
  * PDFium library wrapper.
  *
- * This module provides the core PDFium library management,
- * including initialization with different variants (full/lite).
+ * This module provides the core PDFium library management and initialization.
  *
  * @module pdfium/library
  */

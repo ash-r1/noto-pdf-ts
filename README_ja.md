@@ -6,10 +6,45 @@ Node.js 向けのシンプルで効率的な PDF 変換ライブラリです。P
 
 - シンプルな API - `openPdf()` でPDFを開き、`renderPages()` で画像に変換
 - メモリ効率 - AsyncGenerator を使用した1ページずつの処理
-- 日本語・CJK フォント対応 - pdfjs-dist の CMap を自動検出
+- 日本語・CJK フォント対応 - Noto CJK フォントをバンドルし、確実なレンダリングを実現
 - TypeScript 完全対応 - 型定義付き
 - ESM / CommonJS 両対応
 - `await using` 構文対応（ES2024 AsyncDisposable）
+- ネイティブ依存なし - レンダリングに PDFium WebAssembly を使用
+
+## PDFフォントの基礎知識
+
+### PDFで使用されるフォント形式
+
+PDFには様々なフォント形式でテキストを含めることができます：
+
+- **TrueType (.ttf)** - AppleとMicrosoftが開発した一般的なフォント形式。OSやドキュメントで広く使用されている
+- **OpenType (.otf/.ttf)** - MicrosoftとAdobeが開発したTrueTypeの拡張形式。高度なタイポグラフィ機能を提供
+- **Type 1** - Adobeの古いPostScriptフォント形式
+- **CIDフォント** - CJK（中国語、日本語、韓国語）などの大規模な文字セット用に設計されたフォント
+
+### 埋め込みフォント vs 参照フォント
+
+PDFはフォントを2つの方法で扱います：
+
+1. **埋め込みフォント** - フォントデータがPDFファイル内に直接格納される方式。インストールされているフォントに関係なく、どのシステムでも同一の表示が保証される
+
+2. **参照フォント** - PDFにはフォント名のみが格納され、表示システムがフォントを提供することを期待する方式。ファイルサイズは小さくなるが、表示に問題が生じる可能性がある
+
+### 「豆腐」問題
+
+PDFが参照するフォントがシステムで利用できず、適切な代替フォントも見つからない場合、レンダラーは文字を空の四角形（□）として表示することがあります。この四角形が豆腐のブロックに似ていることから、一般的に「豆腐（Tofu）」と呼ばれています。これは特にCJK文字で起こりやすく、専用のフォントが必要となります。
+
+### noto-pdf-tsのアプローチ
+
+noto-pdf-tsはこれらの課題に以下のように対処しています：
+
+1. **PDFiumベースのレンダリング** - GoogleのPDFiumライブラリ（ChromeのPDFビューアと同じエンジン）をWebAssemblyにコンパイルし、信頼性の高い高品質なレンダリングを実現
+2. **Noto CJKフォントのバンドル** - Noto Sans CJKフォントを同梱しているため、PDFに埋め込みフォントがなくてもCJKテキストの豆腐化を防止
+3. **カスタムフォント登録** - 特殊なユースケース向けに追加フォントの登録が可能
+4. **欠落グリフの検出** - フォント情報の欠如によりレンダリングできない文字を検出し、問題のあるPDFを特定可能
+
+このアプローチにより、プラットフォーム間で一貫したレンダリングを実現し、CJKサポートもデフォルトで優れた品質を提供します。
 
 ## インストール
 
@@ -18,25 +53,6 @@ Node.js 向けのシンプルで効率的な PDF 変換ライブラリです。P
 ```bash
 # 最新の alpha 版をインストール
 npm install noto-pdf-ts@alpha
-```
-
-### 必須依存
-
-このライブラリは [canvas](https://github.com/Automattic/node-canvas) を peer dependency として必要とします。システムに以下の依存関係をインストールしてください：
-
-**macOS:**
-```bash
-brew install pkg-config cairo pango libpng jpeg giflib librsvg
-```
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
-```
-
-**Alpine Linux:**
-```bash
-apk add build-base g++ cairo-dev jpeg-dev pango-dev giflib-dev
 ```
 
 ## 使用方法
@@ -150,8 +166,6 @@ PDFドキュメントを開きます。
 
 - `input`: `string | Buffer | Uint8Array | ArrayBuffer` - ファイルパスまたはバイナリデータ
 - `options.password?`: `string` - 暗号化PDFのパスワード
-- `options.cMapPath?`: `string` - CMapファイルへのカスタムパス
-- `options.standardFontPath?`: `string` - 標準フォントファイルへのカスタムパス
 
 ### `PdfDocument`
 
@@ -208,7 +222,6 @@ try {
 ## 動作環境
 
 - Node.js >= 20.0.0
-- canvas のネイティブ依存関係（上記参照）
 
 ## ライセンス
 

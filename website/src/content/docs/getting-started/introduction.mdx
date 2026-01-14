@@ -9,23 +9,53 @@ description: A simple, memory-efficient library for converting PDF pages to imag
 
 - **Simple API** - Just a few functions to convert PDF pages to images
 - **Memory Efficient** - Processes pages one at a time using async generators
-- **CJK Support** - Full support for Chinese, Japanese, and Korean fonts
+- **CJK Support** - Full support for Chinese, Japanese, and Korean fonts via PDFium
 - **TypeScript** - Written in TypeScript with full type definitions
 - **Modern** - Supports ES2024 `await using` for automatic resource cleanup
+- **Zero Native Dependencies** - Uses PDFium WebAssembly for rendering
+
+## Understanding PDF Fonts
+
+### Font Formats
+
+PDFs support several font formats:
+
+| Format | Description |
+|--------|-------------|
+| **TrueType (.ttf)** | Common format by Apple/Microsoft, widely used |
+| **OpenType (.otf/.ttf)** | Extended TrueType with advanced typography features |
+| **Type 1** | Adobe's legacy PostScript format |
+| **CID fonts** | Designed for large character sets (CJK) |
+
+### Embedded vs. Referenced Fonts
+
+PDFs handle fonts in two fundamentally different ways:
+
+**Embedded fonts** store the actual font data inside the PDF file. This guarantees consistent rendering on any system, but increases file size.
+
+**Referenced fonts** only store the font name, relying on the viewing system to supply the font. This reduces file size but may cause display problems if the font isn't available.
+
+### The "Tofu" Problem
+
+When a referenced font isn't available and no suitable substitute exists, text may render as empty rectangles: □□□
+
+These rectangles are called "tofu" (because they look like blocks of tofu). This is particularly common with CJK (Chinese, Japanese, Korean) characters, which require specialized fonts that may not be installed on all systems.
+
+### How noto-pdf-ts Handles Fonts
+
+noto-pdf-ts takes a robust approach to font handling:
+
+1. **PDFium-based Rendering** - Uses Google's PDFium library (the same engine behind Chrome's PDF viewer) compiled to WebAssembly for reliable, high-quality rendering
+2. **Bundled Noto CJK Fonts** - Includes Noto Sans CJK fonts out of the box, eliminating tofu for CJK text even when PDFs lack embedded fonts
+3. **Custom Font Registration** - Allows registering additional fonts for specialized use cases
+4. **Missing Glyph Detection** - Reports characters that couldn't be rendered, helping identify problematic PDFs
+
+This approach ensures consistent rendering across platforms, with excellent CJK support by default.
 
 ## Installation
 
 ```bash
 npm install noto-pdf-ts
-```
-
-### Canvas Dependency
-
-noto-pdf-ts requires the `canvas` package for rendering. It's included as an optional dependency:
-
-```bash
-# If canvas isn't installed automatically
-npm install canvas
 ```
 
 ## Quick Example
@@ -49,7 +79,6 @@ await pdf.close();
 ## Requirements
 
 - Node.js 20 or later
-- Native canvas support (provided by the `canvas` package)
 
 ## Next Steps
 

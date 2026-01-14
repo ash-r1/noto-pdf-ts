@@ -84,14 +84,7 @@ await Promise.all(
 
 ## CJK Font Support
 
-noto-pdf-ts automatically detects and configures CMap files for CJK font support. If you need custom font paths:
-
-```typescript
-const pdf = await openPdf('/path/to/document.pdf', {
-  cMapPath: '/custom/path/to/cmaps/',
-  standardFontPath: '/custom/path/to/fonts/'
-});
-```
+noto-pdf-ts provides built-in support for Chinese, Japanese, and Korean fonts through PDFium. CJK fonts are handled automatically without any additional configuration.
 
 ## Rendering Single Pages
 
