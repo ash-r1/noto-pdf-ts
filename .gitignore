@@ -148,3 +148,6 @@ website/src/content/docs/api/
 
 # pnpm store
 .pnpm-store/
+
+# Integration test artifacts
+tests/integration/*/package-lock.json

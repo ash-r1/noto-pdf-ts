@@ -87,3 +87,32 @@ jobs:
         with:
           name: dist
           path: dist/
+
+  integration-test:
+    name: Integration Test (${{ matrix.module-type }})
+    runs-on: ubuntu-latest
+    needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        module-type: [esm, cjs]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Create package tarball
+        run: npm pack
+      - name: Install package in test directory
+        run: |
+          cd tests/integration/${{ matrix.module-type }}-test
+          npm install ../../../noto-pdf-ts-*.tgz
+      - name: Run integration test
+        run: |
+          cd tests/integration/${{ matrix.module-type }}-test
+          npm test
