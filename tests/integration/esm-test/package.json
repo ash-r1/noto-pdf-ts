@@ -5,5 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "node test.mjs"
+  },
+  "dependencies": {
+    "@noto-pdf-ts/core": "file:../../../noto-pdf-ts-core-0.0.1-alpha.0.tgz",
+    "sharp": "^0.33.5"
   }
 }

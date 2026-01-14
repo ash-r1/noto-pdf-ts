@@ -18,14 +18,16 @@ const main = require('@noto-pdf-ts/core');
 
 assert.strictEqual(typeof main.VERSION, 'string', 'VERSION should be a string');
 assert.strictEqual(typeof main.PDFiumLibrary, 'function', 'PDFiumLibrary should be a class');
-assert.strictEqual(typeof main.registerFonts, 'function', 'registerFonts should be a function');
-assert.strictEqual(typeof main.listFonts, 'function', 'listFonts should be a function');
+assert.strictEqual(typeof main.openPdf, 'function', 'openPdf should be a function');
+assert.strictEqual(typeof main.renderPdfPages, 'function', 'renderPdfPages should be a function');
+assert.strictEqual(typeof main.getPageCount, 'function', 'getPageCount should be a function');
 assert.strictEqual(typeof main.PdfError, 'function', 'PdfError should be a class');
 
 console.log('   - VERSION:', main.VERSION);
 console.log('   - PDFiumLibrary: OK');
-console.log('   - registerFonts: OK');
-console.log('   - listFonts: OK');
+console.log('   - openPdf: OK');
+console.log('   - renderPdfPages: OK');
+console.log('   - getPageCount: OK');
 console.log('   - PdfError: OK');
 console.log('   PASSED\n');
 

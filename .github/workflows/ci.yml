@@ -114,9 +114,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-output
-      - name: Install package in test directory
+      - name: Install dependencies and package in test directory
         run: |
           cd tests/integration/${{ matrix.module-type }}-test
+          npm install
           npm install ../../../noto-pdf-ts-core-*.tgz
       - name: Run integration test
         run: |
