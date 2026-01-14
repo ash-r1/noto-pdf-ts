@@ -89,14 +89,13 @@ jobs:
       - name: Build
         run: pnpm build
       - name: Create package tarball
-        run: npm pack
+        run: cd packages/core && npm pack && mv *.tgz ../..
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: |
-            dist/
-            noto-pdf-ts-*.tgz
+            noto-pdf-ts-core-*.tgz
 
   integration-test:
     name: Integration Test (${{ matrix.module-type }})
@@ -118,7 +117,7 @@ jobs:
       - name: Install package in test directory
         run: |
           cd tests/integration/${{ matrix.module-type }}-test
-          npm install ../../../noto-pdf-ts-*.tgz
+          npm install ../../../noto-pdf-ts-core-*.tgz
       - name: Run integration test
         run: |
           cd tests/integration/${{ matrix.module-type }}-test
