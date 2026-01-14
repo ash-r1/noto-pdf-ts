@@ -9,7 +9,7 @@
   },
   "packageManager": "pnpm@10.26.2",
   "scripts": {
-    "build": "pnpm -r --filter './packages/*' build",
+    "build": "pnpm build:core && pnpm build:fonts",
     "build:core": "pnpm --filter @noto-pdf-ts/core build",
     "build:fonts": "pnpm --filter '@noto-pdf-ts/fonts-*' build",
     "test": "pnpm -r --filter './packages/*' test",
