@@ -111,7 +111,7 @@ jobs:
           name: dist
           path: dist/
       - name: Create package tarball
-        run: npm pack
+        run: npm pack --ignore-scripts
       - name: Install package in test directory
         run: |
           cd tests/integration/${{ matrix.module-type }}-test
