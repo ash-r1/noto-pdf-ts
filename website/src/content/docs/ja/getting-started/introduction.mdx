@@ -9,9 +9,10 @@ description: Node.js向けのシンプルで効率的なPDF画像変換ライブ
 
 - **シンプルなAPI** - わずか数個の関数でPDFページを画像に変換
 - **メモリ効率** - 非同期ジェネレータを使用して1ページずつ処理
-- **CJKサポート** - 中国語、日本語、韓国語フォントを完全サポート
+- **CJKサポート** - PDFium による中国語、日本語、韓国語フォントの完全サポート
 - **TypeScript** - TypeScriptで書かれており、完全な型定義を提供
 - **モダン** - ES2024の`await using`による自動リソースクリーンアップをサポート
+- **ネイティブ依存なし** - レンダリングに PDFium WebAssembly を使用
 
 ## PDFフォントの基礎知識
 
@@ -57,15 +58,6 @@ noto-pdf-tsはフォント処理に対して堅牢なアプローチを取って
 npm install noto-pdf-ts
 ```
 
-### Canvas依存関係
-
-noto-pdf-tsはレンダリングに`canvas`パッケージを必要とします。オプショナルな依存関係として含まれています：
-
-```bash
-# canvasが自動的にインストールされない場合
-npm install canvas
-```
-
 ## クイック例
 
 ```typescript
@@ -87,7 +79,6 @@ await pdf.close();
 ## 要件
 
 - Node.js 20以降
-- ネイティブcanvasサポート（`canvas`パッケージで提供）
 
 ## 次のステップ
 
