@@ -7,7 +7,9 @@ export default defineConfig({
   },
   format: ['esm', 'cjs'],
   dts: {
-    tsconfig: './tsconfig.json',
+    compilerOptions: {
+      composite: false,
+    },
   },
   splitting: false,
   sourcemap: true,
