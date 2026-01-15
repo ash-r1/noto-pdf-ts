@@ -41,6 +41,7 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+packages/*/node_modules/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
@@ -90,6 +91,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+packages/*/dist/
 
 # Gatsby files
 .cache/
@@ -148,6 +150,16 @@ website/src/content/docs/api/
 
 # pnpm store
 .pnpm-store/
+
+# Monorepo: Font files (downloaded, not committed)
+packages/fonts-*/fonts/*.ttf
+packages/fonts-*/fonts/*.ttc
+
+# Monorepo: Test fixtures (keep structure, not all files)
+fixtures/fonts/*.ttc
+
+# Temporary font download directory
+.tmp-fonts/
 
 # Integration test artifacts
 tests/integration/*/package-lock.json

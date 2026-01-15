@@ -156,11 +156,11 @@
     }
   },
   "files": {
-    "includes": ["src/**/*.ts"]
+    "includes": ["packages/*/src/**/*.ts"]
   },
   "overrides": [
     {
-      "includes": ["src/pdfium/types.ts"],
+      "includes": ["packages/core/src/pdfium/types.ts"],
       "linter": {
         "rules": {
           "style": {

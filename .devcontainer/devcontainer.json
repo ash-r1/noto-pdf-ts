@@ -2,7 +2,6 @@
   "name": "noto-pdf-ts Dev Container",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
   "mounts": [
-    "source=noto-pdf-ts-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
     "source=noto-pdf-ts-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume",
     "source=noto-pdf-ts-claude-config,target=/home/node/.config/claude,type=volume",
     "source=noto-pdf-ts-claude-data,target=/home/node/.local/share/claude,type=volume"
@@ -13,8 +12,9 @@
     "NPM_CONFIG_PREFIX": "/home/node/.npm-global"
   },
   "remoteEnv": {
-    "PATH": "${containerEnv:PNPM_HOME}:${containerEnv:NPM_CONFIG_PREFIX}/bin:${containerEnv:PATH}"
+    "PATH": "/home/node/.local/bin:${containerEnv:PNPM_HOME}:${containerEnv:NPM_CONFIG_PREFIX}/bin:${containerEnv:PATH}"
   },
+  "onCreateCommand": "sudo chown -R node:node /home/node/.local /home/node/.config",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
   "customizations": {
@@ -43,7 +43,8 @@
       "version": "latest"
     },
     "ghcr.io/devcontainers/features/git-lfs:1": {
-      "version": "latest"
+      "version": "latest",
+      "autoPull": false
     },
     "ghcr.io/devcontainers/features/github-cli:1": {
       "version": "latest"

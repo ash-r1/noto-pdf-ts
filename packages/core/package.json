@@ -1,0 +1,83 @@
+{
+  "name": "@noto-pdf-ts/core",
+  "version": "0.0.1-alpha.0",
+  "description": "PDF conversion library for Node.js - Core package without embedded fonts",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "noto-pdf-ts": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@10.26.2",
+  "scripts": {
+    "build": "tsup && pnpm run copy-assets",
+    "copy-assets": "node ../../scripts/copy-assets.js core",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm test:ci && pnpm build"
+  },
+  "keywords": [
+    "pdf",
+    "conversion",
+    "typescript",
+    "node",
+    "thumbnail",
+    "image",
+    "jpeg",
+    "png",
+    "pdfium"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.10",
+    "@noto-pdf-ts/fonts-cjk": "workspace:*",
+    "@types/node": "^22.10.5",
+    "@types/pngjs": "^6.0.5",
+    "pdf-lib": "^1.17.1",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.33.5",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ash-r1/noto-pdf-ts.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/ash-r1/noto-pdf-ts/issues"
+  },
+  "homepage": "https://github.com/ash-r1/noto-pdf-ts#readme"
+}
