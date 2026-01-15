@@ -50,11 +50,16 @@ jobs:
           NPM_CONFIG_PROVENANCE: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create Git Tag
+      - name: Create Git Tags
         if: steps.changesets.outputs.published == 'true'
         run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          git tag "v${PACKAGE_VERSION}"
-          git push origin "v${PACKAGE_VERSION}"
+          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -c '.[]' | while read -r pkg; do
+            NAME=$(echo "$pkg" | jq -r '.name')
+            VERSION=$(echo "$pkg" | jq -r '.version')
+            TAG="${NAME}@${VERSION}"
+            echo "Creating tag: $TAG"
+            git tag "$TAG"
+            git push origin "$TAG"
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

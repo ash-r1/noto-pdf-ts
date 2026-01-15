@@ -8,5 +8,6 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: 'dist',
+  shims: true,
   external: ['@noto-pdf-ts/core', 'node:fs/promises', 'node:path', 'node:url'],
 });
