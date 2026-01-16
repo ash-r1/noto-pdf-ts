@@ -145,6 +145,7 @@ website/src/content/docs/api/
 # Keep env example
 !.env.example
 
+.claude
 # Keep claude settings
 !.claude/settings.json
 
