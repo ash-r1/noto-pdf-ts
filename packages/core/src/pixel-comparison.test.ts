@@ -29,16 +29,18 @@ try {
 
 const describeWithPdfium: typeof describe = pdfiumAvailable ? describe : describe.skip;
 
-// Path to test fixtures
+// Path to test fixtures (PDFs and snapshots are colocated)
 const testDir: string = path.dirname(fileURLToPath(import.meta.url));
-const FIXTURES_DIR: string = path.join(testDir, '../fixtures/pdfs');
+const FIXTURES_DIR: string = path.join(testDir, '../test-fixtures');
 
-// Create snapshot matcher
+// Create snapshot matcher using fixtures directory as base
+// Snapshots are stored alongside PDFs: test-fixtures/<name>/snapshots/<page>.png
 const matchSnapshot: ReturnType<typeof createSnapshotMatcher> = createSnapshotMatcher(
-  import.meta.url,
+  path.join(FIXTURES_DIR, 'dummy.ts'), // Use fixtures dir as base for snapshot paths
   {
     threshold: 0.1,
     maxDiffPercentage: 0, // Exact match required
+    snapshotDir: '', // No extra subdirectory - path is fully specified in snapshot name
   },
 );
 
@@ -55,12 +57,12 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
   describe('simple-text.pdf', () => {
     it('should render page 1 correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'simple-text.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'simple-text/simple-text.pdf');
       const pdf = await openPdf(pdfPath);
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'simple-text/1');
+        const result = matchSnapshot(page.buffer, 'simple-text/snapshots/1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -69,12 +71,12 @@ describeWithPdfium('Pixel Comparison Tests', () => {
     });
 
     it('should render page 1 at 2x scale correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'simple-text.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'simple-text/simple-text.pdf');
       const pdf = await openPdf(pdfPath);
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 2.0 });
-        const result = matchSnapshot(page.buffer, 'simple-text/1-2x');
+        const result = matchSnapshot(page.buffer, 'simple-text/snapshots/1-2x');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -85,12 +87,12 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
   describe('shapes.pdf', () => {
     it('should render colored shapes correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'shapes.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'shapes/shapes.pdf');
       const pdf = await openPdf(pdfPath);
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'shapes/1');
+        const result = matchSnapshot(page.buffer, 'shapes/snapshots/1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -101,7 +103,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
   describe('multi-page.pdf', () => {
     it('should render all pages correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'multi-page.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'multi-page/multi-page.pdf');
       const pdf = await openPdf(pdfPath);
 
       try {
@@ -109,7 +111,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
         for (let pageNum = 1; pageNum <= pdf.pageCount; pageNum++) {
           const page = await pdf.renderPage(pageNum, { format: 'png', scale: 1.0 });
-          const result = matchSnapshot(page.buffer, `multi-page/${pageNum}`);
+          const result = matchSnapshot(page.buffer, `multi-page/snapshots/${pageNum}`);
 
           expect(result.match, `Page ${pageNum} diff: ${result.diffPercentage.toFixed(2)}%`).toBe(
             true,
@@ -123,12 +125,12 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
   describe('gradient.pdf', () => {
     it('should render gradient correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'gradient.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'gradient/gradient.pdf');
       const pdf = await openPdf(pdfPath);
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
-        const result = matchSnapshot(page.buffer, 'gradient/1');
+        const result = matchSnapshot(page.buffer, 'gradient/snapshots/1');
 
         expect(result.match, `Diff: ${result.diffPercentage.toFixed(2)}%`).toBe(true);
       } finally {
@@ -139,7 +141,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
   describe('render consistency', () => {
     it('should produce identical output for same PDF rendered twice', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'shapes.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'shapes/shapes.pdf');
 
       // First render
       const pdf1 = await openPdf(pdfPath);
