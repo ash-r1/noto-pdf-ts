@@ -29,15 +29,16 @@ try {
 
 const describeWithPdfium: typeof describe = pdfiumAvailable ? describe : describe.skip;
 
-// Path to test fixtures
-const FIXTURES_DIR = path.join(import.meta.dirname, '../fixtures/pdfs');
+// Path to test fixtures (PDFs and snapshots are colocated)
+const FIXTURES_DIR = path.join(import.meta.dirname, '../test-fixtures');
 const FIXTURES_WITH_MISSING_GLYPHS_DIR = path.join(FIXTURES_DIR, 'with-missing-glyphs');
 
-// Create snapshot matcher with slightly higher tolerance for CJK fonts
-// (different systems may render CJK fonts slightly differently)
-const matchSnapshot = createSnapshotMatcher(import.meta.url, {
+// Create snapshot matcher using fixtures directory as base
+// Snapshots are stored alongside PDFs: test-fixtures/<path>/<name>/snapshots/<page>.png
+const matchSnapshot = createSnapshotMatcher(path.join(FIXTURES_DIR, 'dummy.ts'), {
   threshold: 0.1,
   maxDiffPercentage: 1, // Allow 1% difference for cross-platform font rendering
+  snapshotDir: '', // No extra subdirectory - path is fully specified in snapshot name
 });
 
 /**
@@ -50,11 +51,13 @@ interface TestAllPagesOptions {
 
 /**
  * Helper function to test all pages of a PDF.
- * Snapshots are stored as <pdfBaseName>/<pageNum>.png
+ * Snapshots are stored alongside PDFs: <pdfDir>/snapshots/<pageNum>.png
  */
 async function testAllPages(pdfPath: string, options: TestAllPagesOptions = {}) {
   const { maxPages, ignoreMissingGlyphs } = options;
-  const pdfBaseName = path.basename(pdfPath, '.pdf');
+  // Get the relative path from FIXTURES_DIR to the PDF's directory
+  const pdfDir = path.dirname(pdfPath);
+  const relativePdfDir = path.relative(FIXTURES_DIR, pdfDir);
   const pdf = await openPdf(pdfPath);
 
   try {
@@ -69,8 +72,8 @@ async function testAllPages(pdfPath: string, options: TestAllPagesOptions = {}) 
         scale: 1.0,
         ignoreMissingGlyphs,
       });
-      // Use hierarchical snapshot path: <pdfName>/<pageNum>
-      const result = matchSnapshot(page.buffer, `${pdfBaseName}/${pageNum}`);
+      // Use hierarchical snapshot path: <relativePdfDir>/snapshots/<pageNum>
+      const result = matchSnapshot(page.buffer, `${relativePdfDir}/snapshots/${pageNum}`);
 
       expect(
         result.match,
@@ -95,25 +98,28 @@ describeWithPdfium('CJK Rendering Tests', () => {
 
   describe('Japanese PDFs', () => {
     it('SFAA_Japanese.pdf - should render first 5 pages correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'jp/SFAA_Japanese.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'jp/SFAA_Japanese/SFAA_Japanese.pdf');
       const pageCount = await testAllPages(pdfPath, { maxPages: 5 });
       expect(pageCount).toBe(5);
     });
 
     it('ichiji.pdf - should render all pages correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'jp/ichiji.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'jp/ichiji/ichiji.pdf');
       const pageCount = await testAllPages(pdfPath);
       expect(pageCount).toBeGreaterThan(0);
     });
 
     it('TaroUTR50SortedList112.pdf - should render all pages with vertical text correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'jp/TaroUTR50SortedList112.pdf');
+      const pdfPath = path.join(
+        FIXTURES_DIR,
+        'jp/TaroUTR50SortedList112/TaroUTR50SortedList112.pdf',
+      );
       const pageCount = await testAllPages(pdfPath);
       expect(pageCount).toBeGreaterThan(0);
     });
 
     it('cid_cff.pdf - should render all pages with CID-keyed CFF font correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'jp/cid_cff.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'jp/cid_cff/cid_cff.pdf');
       const pageCount = await testAllPages(pdfPath);
       expect(pageCount).toBeGreaterThan(0);
     });
@@ -121,7 +127,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
 
   describe('Chinese PDFs', () => {
     it('ap-chinese.pdf - should render all pages correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'cn/ap-chinese.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'cn/ap-chinese/ap-chinese.pdf');
       const pageCount = await testAllPages(pdfPath);
       expect(pageCount).toBeGreaterThan(0);
     });
@@ -129,13 +135,13 @@ describeWithPdfium('CJK Rendering Tests', () => {
 
   describe('CID and Unicode font PDFs', () => {
     it('ArabicCIDTrueType.pdf - should render all pages correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'ArabicCIDTrueType.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'ArabicCIDTrueType/ArabicCIDTrueType.pdf');
       const pageCount = await testAllPages(pdfPath);
       expect(pageCount).toBeGreaterThan(0);
     });
 
     it('pdf20-utf8-test.pdf - should render all pages correctly', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'pdf20-utf8-test.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'pdf20-utf8-test/pdf20-utf8-test.pdf');
       const pageCount = await testAllPages(pdfPath);
       expect(pageCount).toBeGreaterThan(0);
     });
@@ -148,7 +154,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
     it('arial_unicode_ab_cidfont.pdf - should render with tofu for missing glyphs', async () => {
       const pdfPath = path.join(
         FIXTURES_WITH_MISSING_GLYPHS_DIR,
-        'jp/arial_unicode_ab_cidfont.pdf',
+        'jp/arial_unicode_ab_cidfont/arial_unicode_ab_cidfont.pdf',
       );
       const pageCount = await testAllPages(pdfPath, {
         ignoreMissingGlyphs: true,
@@ -157,7 +163,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
     });
 
     it('eps-hangul.pdf - should render all pages with tofu for missing glyphs', async () => {
-      const pdfPath = path.join(FIXTURES_WITH_MISSING_GLYPHS_DIR, 'kr/eps-hangul.pdf');
+      const pdfPath = path.join(FIXTURES_WITH_MISSING_GLYPHS_DIR, 'kr/eps-hangul/eps-hangul.pdf');
       const pageCount = await testAllPages(pdfPath, {
         ignoreMissingGlyphs: true,
       });
@@ -167,7 +173,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
     it('hangul-practice-worksheet.pdf - should render all pages with tofu for missing glyphs', async () => {
       const pdfPath = path.join(
         FIXTURES_WITH_MISSING_GLYPHS_DIR,
-        'kr/hangul-practice-worksheet.pdf',
+        'kr/hangul-practice-worksheet/hangul-practice-worksheet.pdf',
       );
       const pageCount = await testAllPages(pdfPath, {
         ignoreMissingGlyphs: true,
@@ -178,7 +184,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
 
   describe('CJK rendering consistency', () => {
     it('should produce identical output for same Japanese PDF rendered twice', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'jp/ichiji.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'jp/ichiji/ichiji.pdf');
 
       // First render
       const pdf1 = await openPdf(pdfPath);
@@ -199,7 +205,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
     });
 
     it('should produce identical output for same Chinese PDF rendered twice', async () => {
-      const pdfPath = path.join(FIXTURES_DIR, 'cn/ap-chinese.pdf');
+      const pdfPath = path.join(FIXTURES_DIR, 'cn/ap-chinese/ap-chinese.pdf');
 
       // First render
       const pdf1 = await openPdf(pdfPath);
@@ -220,7 +226,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
     });
 
     it('should produce identical output for same Korean PDF rendered twice', async () => {
-      const pdfPath = path.join(FIXTURES_WITH_MISSING_GLYPHS_DIR, 'kr/eps-hangul.pdf');
+      const pdfPath = path.join(FIXTURES_WITH_MISSING_GLYPHS_DIR, 'kr/eps-hangul/eps-hangul.pdf');
 
       // First render (ignoreMissingGlyphs because this PDF has incomplete Unicode mappings)
       const pdf1 = await openPdf(pdfPath);
