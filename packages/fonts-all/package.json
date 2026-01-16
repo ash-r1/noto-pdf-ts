@@ -1,0 +1,189 @@
+{
+  "name": "@noto-pdf-ts/fonts-all",
+  "version": "0.0.1-alpha.0",
+  "description": "Complete collection of Noto Sans fonts for noto-pdf-ts - supports 20+ scripts including CJK, Arabic, Hebrew, Indic, and more",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./latin": {
+      "types": "./dist/latin.d.ts",
+      "import": "./dist/latin.js",
+      "require": "./dist/latin.cjs"
+    },
+    "./japanese": {
+      "types": "./dist/japanese.d.ts",
+      "import": "./dist/japanese.js",
+      "require": "./dist/japanese.cjs"
+    },
+    "./korean": {
+      "types": "./dist/korean.d.ts",
+      "import": "./dist/korean.js",
+      "require": "./dist/korean.cjs"
+    },
+    "./chinese-simplified": {
+      "types": "./dist/chinese-simplified.d.ts",
+      "import": "./dist/chinese-simplified.js",
+      "require": "./dist/chinese-simplified.cjs"
+    },
+    "./chinese-traditional": {
+      "types": "./dist/chinese-traditional.d.ts",
+      "import": "./dist/chinese-traditional.js",
+      "require": "./dist/chinese-traditional.cjs"
+    },
+    "./arabic": {
+      "types": "./dist/arabic.d.ts",
+      "import": "./dist/arabic.js",
+      "require": "./dist/arabic.cjs"
+    },
+    "./hebrew": {
+      "types": "./dist/hebrew.d.ts",
+      "import": "./dist/hebrew.js",
+      "require": "./dist/hebrew.cjs"
+    },
+    "./devanagari": {
+      "types": "./dist/devanagari.d.ts",
+      "import": "./dist/devanagari.js",
+      "require": "./dist/devanagari.cjs"
+    },
+    "./bengali": {
+      "types": "./dist/bengali.d.ts",
+      "import": "./dist/bengali.js",
+      "require": "./dist/bengali.cjs"
+    },
+    "./tamil": {
+      "types": "./dist/tamil.d.ts",
+      "import": "./dist/tamil.js",
+      "require": "./dist/tamil.cjs"
+    },
+    "./telugu": {
+      "types": "./dist/telugu.d.ts",
+      "import": "./dist/telugu.js",
+      "require": "./dist/telugu.cjs"
+    },
+    "./gujarati": {
+      "types": "./dist/gujarati.d.ts",
+      "import": "./dist/gujarati.js",
+      "require": "./dist/gujarati.cjs"
+    },
+    "./kannada": {
+      "types": "./dist/kannada.d.ts",
+      "import": "./dist/kannada.js",
+      "require": "./dist/kannada.cjs"
+    },
+    "./malayalam": {
+      "types": "./dist/malayalam.d.ts",
+      "import": "./dist/malayalam.js",
+      "require": "./dist/malayalam.cjs"
+    },
+    "./oriya": {
+      "types": "./dist/oriya.d.ts",
+      "import": "./dist/oriya.js",
+      "require": "./dist/oriya.cjs"
+    },
+    "./gurmukhi": {
+      "types": "./dist/gurmukhi.d.ts",
+      "import": "./dist/gurmukhi.js",
+      "require": "./dist/gurmukhi.cjs"
+    },
+    "./sinhala": {
+      "types": "./dist/sinhala.d.ts",
+      "import": "./dist/sinhala.js",
+      "require": "./dist/sinhala.cjs"
+    },
+    "./thai": {
+      "types": "./dist/thai.d.ts",
+      "import": "./dist/thai.js",
+      "require": "./dist/thai.cjs"
+    },
+    "./lao": {
+      "types": "./dist/lao.d.ts",
+      "import": "./dist/lao.js",
+      "require": "./dist/lao.cjs"
+    },
+    "./myanmar": {
+      "types": "./dist/myanmar.d.ts",
+      "import": "./dist/myanmar.js",
+      "require": "./dist/myanmar.cjs"
+    },
+    "./khmer": {
+      "types": "./dist/khmer.d.ts",
+      "import": "./dist/khmer.js",
+      "require": "./dist/khmer.cjs"
+    },
+    "./armenian": {
+      "types": "./dist/armenian.d.ts",
+      "import": "./dist/armenian.js",
+      "require": "./dist/armenian.cjs"
+    },
+    "./georgian": {
+      "types": "./dist/georgian.d.ts",
+      "import": "./dist/georgian.js",
+      "require": "./dist/georgian.cjs"
+    },
+    "./ethiopic": {
+      "types": "./dist/ethiopic.d.ts",
+      "import": "./dist/ethiopic.js",
+      "require": "./dist/ethiopic.cjs"
+    },
+    "./all": {
+      "types": "./dist/all.d.ts",
+      "import": "./dist/all.js",
+      "require": "./dist/all.cjs"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsup && pnpm run copy-assets",
+    "copy-assets": "node ../../scripts/copy-assets.js fonts-all",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "license": "OFL-1.1",
+  "peerDependencies": {
+    "@noto-pdf-ts/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.2"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ash-r1/noto-pdf-ts.git",
+    "directory": "packages/fonts-all"
+  },
+  "bugs": {
+    "url": "https://github.com/ash-r1/noto-pdf-ts/issues"
+  },
+  "homepage": "https://github.com/ash-r1/noto-pdf-ts#readme",
+  "keywords": [
+    "noto",
+    "fonts",
+    "unicode",
+    "cjk",
+    "japanese",
+    "chinese",
+    "korean",
+    "arabic",
+    "hebrew",
+    "devanagari",
+    "thai",
+    "multilingual",
+    "pdf"
+  ]
+}
