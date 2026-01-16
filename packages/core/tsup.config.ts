@@ -16,5 +16,5 @@ export default defineConfig({
   clean: true,
   outDir: 'dist',
   shims: true,
-  external: ['canvas', 'pdfjs-dist', 'pdf-lib', 'sharp'],
+  external: ['pdfjs-dist', 'pdf-lib', 'sharp'],
 });
