@@ -54,11 +54,6 @@ jobs:
         if: runner.os == 'Windows'
         run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
-      - name: Install canvas system dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:

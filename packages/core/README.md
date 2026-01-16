@@ -22,24 +22,15 @@ A simple and efficient PDF conversion library for Node.js. Convert PDF pages to 
 npm install noto-pdf-ts@alpha
 ```
 
-### Required Dependencies
+### Peer Dependencies
 
-This library requires [canvas](https://github.com/Automattic/node-canvas) as a peer dependency. Install the following system dependencies:
+This library requires [sharp](https://github.com/lovell/sharp) as a peer dependency for image processing:
 
-**macOS:**
 ```bash
-brew install pkg-config cairo pango libpng jpeg giflib librsvg
+npm install sharp
 ```
 
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
-```
-
-**Alpine Linux:**
-```bash
-apk add build-base g++ cairo-dev jpeg-dev pango-dev giflib-dev
-```
+> **Note:** sharp uses pre-built binaries for most platforms, so no native compilation is typically required.
 
 ## Usage
 
@@ -210,7 +201,7 @@ try {
 ## Requirements
 
 - Node.js >= 20.0.0
-- Native dependencies for canvas (see above)
+- sharp (peer dependency)
 
 ## License
 
