@@ -46,8 +46,8 @@ export default defineConfig({
       ],
       plugins: [
         starlightTypeDoc({
-          entryPoints: ['../src/index.ts'],
-          tsconfig: '../tsconfig.json',
+          entryPoints: ['../packages/core/src/index.ts'],
+          tsconfig: '../packages/core/tsconfig.json',
           typeDoc: {
             excludePrivate: true,
             excludeInternal: true,
