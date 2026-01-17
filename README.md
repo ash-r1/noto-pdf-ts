@@ -1,5 +1,7 @@
 # noto-pdf-ts
 
+[Documentation](https://ash-r1.github.io/noto-pdf-ts/) | [API Reference](https://ash-r1.github.io/noto-pdf-ts/api/)
+
 A simple and efficient PDF rendering library for Node.js. Convert PDF pages to images (JPEG/PNG) with built-in CJK (Chinese, Japanese, Korean) font support.
 
 ## Features
