@@ -2,7 +2,17 @@
   "mode": "pre",
   "tag": "alpha",
   "initialVersions": {
-    "noto-pdf-ts": "0.0.1-alpha.0"
+    "noto-pdf-ts": "0.0.1-alpha.0",
+    "@noto-pdf-ts/core": "0.0.1-alpha.0",
+    "@noto-pdf-ts/fonts-all": "0.0.1-alpha.0",
+    "@noto-pdf-ts/fonts-cjk": "0.0.1-alpha.0",
+    "@noto-pdf-ts/fonts-jp": "0.0.1-alpha.0",
+    "@noto-pdf-ts/fonts-kr": "0.0.1-alpha.0",
+    "@noto-pdf-ts/fonts-sc": "0.0.1-alpha.0",
+    "@noto-pdf-ts/fonts-tc": "0.0.1-alpha.0",
+    "noto-pdf-ts-docs": "0.0.1"
   },
-  "changesets": []
+  "changesets": [
+    "fix-wasm-path"
+  ]
 }
