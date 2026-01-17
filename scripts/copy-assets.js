@@ -74,12 +74,25 @@ if (!fs.existsSync(packageDir)) {
 console.log(`Copying assets for package: ${packageName}`);
 
 if (packageName === 'core') {
-  // Copy WASM files for core package
+  // Copy WASM file for core package
+  // WASM file must be in dist/ directly because the bundled code resolves it
+  // relative to import.meta.url (which points to dist/index.js)
   const srcWasmDir = path.join(packageDir, 'src', 'pdfium', 'wasm');
-  const distWasmDir = path.join(packageDir, 'dist', 'pdfium', 'wasm');
+  const distDir = path.join(packageDir, 'dist');
 
   console.log('WASM files:');
-  copyDir(srcWasmDir, distWasmDir, 'WASM');
+  const wasmFile = 'pdfium.esm.wasm';
+  const srcPath = path.join(srcWasmDir, wasmFile);
+  const destPath = path.join(distDir, wasmFile);
+
+  if (fs.existsSync(srcPath)) {
+    fs.copyFileSync(srcPath, destPath);
+    const stat = fs.statSync(srcPath);
+    console.log(`  ✓ ${wasmFile} (${(stat.size / 1024 / 1024).toFixed(2)} MB)`);
+    console.log('WASM: Copied 1 file(s)');
+  } else {
+    console.log(`Source file not found: ${srcPath}`);
+  }
 } else if (packageName.startsWith('fonts-')) {
   // Copy font files for font packages
   const srcFontsDir = path.join(packageDir, 'fonts');

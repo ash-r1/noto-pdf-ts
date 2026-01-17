@@ -1,13 +1,19 @@
 /**
  * ESM Integration Test
  *
- * This test verifies that the package can be imported correctly in an ESM environment.
+ * This test verifies that the package works correctly in an ESM environment.
  * It checks:
  * - Main entry point import (@noto-pdf-ts/core)
  * - Exported functions and values exist
+ * - PDF conversion actually works (WASM loads correctly)
  */
 
 import assert from 'node:assert';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const fixturesDir = path.join(__dirname, '../../../packages/core/test-fixtures');
 
 console.log('ESM Integration Test');
 console.log('====================\n');
@@ -29,6 +35,31 @@ console.log('   - openPdf: OK');
 console.log('   - renderPdfPages: OK');
 console.log('   - getPageCount: OK');
 console.log('   - PdfError: OK');
+console.log('   PASSED\n');
+
+// Test: PDF conversion (verifies WASM loads correctly)
+console.log('2. Testing PDF conversion (WASM loading)...');
+
+const pdfPath = path.join(fixturesDir, 'shapes/shapes.pdf');
+const pdf = await main.openPdf(pdfPath);
+assert.strictEqual(pdf.pageCount, 1, 'PDF should have 1 page');
+
+let renderedCount = 0;
+for await (const rendered of pdf.renderPages({ format: 'jpeg', scale: 1 })) {
+  assert.ok(rendered.buffer instanceof Buffer, 'Rendered page should have a Buffer');
+  assert.ok(rendered.buffer.length > 0, 'Rendered buffer should not be empty');
+  assert.strictEqual(rendered.pageNumber, 1, 'Page number should be 1');
+  assert.ok(rendered.width > 0, 'Width should be positive');
+  assert.ok(rendered.height > 0, 'Height should be positive');
+  renderedCount++;
+}
+assert.strictEqual(renderedCount, 1, 'Should have rendered 1 page');
+
+await pdf.close();
+
+console.log('   - PDF opened: OK');
+console.log('   - WASM loaded successfully: OK');
+console.log('   - Page rendered to JPEG: OK');
 console.log('   PASSED\n');
 
 console.log('====================');
