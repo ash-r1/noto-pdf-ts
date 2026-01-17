@@ -1,5 +1,7 @@
 # noto-pdf-ts
 
+[Documentation](https://ash-r1.github.io/noto-pdf-ts/) | [API Reference](https://ash-r1.github.io/noto-pdf-ts/api/)
+
 [日本語版 README](./README_ja.md)
 
 A simple and efficient PDF conversion library for Node.js. Convert PDF pages to images (JPEG/PNG).
