@@ -1,6 +1,6 @@
 {
   "name": "@noto-pdf-ts/fonts-tc",
-  "version": "0.0.1-alpha.0",
+  "version": "0.0.1-alpha.1",
   "description": "Noto Sans Traditional Chinese font for noto-pdf-ts",
   "type": "module",
   "main": "./dist/index.cjs",
