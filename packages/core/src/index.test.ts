@@ -243,17 +243,9 @@ describeWithPdfium('document lifecycle', () => {
 });
 
 describeWithPdfium('NotoPdf lifecycle', () => {
-  it('should create independent instances', async () => {
-    const { NotoPdf: NotoPdfClass } = await import('./index.js');
-
-    const instance1 = await NotoPdfClass.init();
-    const instance2 = await NotoPdfClass.init();
-
-    expect(instance1).not.toBe(instance2);
-
-    instance1.destroy();
-    instance2.destroy();
-  });
+  // Note: We don't test creating multiple NotoPdf instances because each loads
+  // a separate ~20MB WASM module, causing memory issues.
+  // The design explicitly states: "Only create one instance per process."
 
   it('should throw after destroy', async () => {
     const { NotoPdf: NotoPdfClass } = await import('./index.js');

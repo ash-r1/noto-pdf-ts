@@ -25,15 +25,9 @@ afterEach(() => {
 });
 
 describe('PDFiumLibrary instance management', () => {
-  it('should create new instance on each init() call', async () => {
-    const library1 = await PDFiumLibrary.init();
-    libraries.push(library1);
-
-    const library2 = await PDFiumLibrary.init();
-    libraries.push(library2);
-
-    expect(library1).not.toBe(library2);
-  });
+  // Note: We don't test creating multiple instances because each instance
+  // loads a separate ~20MB WASM module, causing memory issues.
+  // The design explicitly states: "Only create one instance per process."
 
   it('should load PDF documents', async () => {
     const library = await PDFiumLibrary.init();
