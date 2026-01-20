@@ -33,34 +33,6 @@
 export type PdfInput = string | Buffer | Uint8Array | ArrayBuffer;
 
 /**
- * Options for opening a PDF document.
- *
- * @example
- * ```typescript
- * // Open password-protected PDF
- * const pdf = await notoPdf.openPdf('/path/to/encrypted.pdf', {
- *   password: 'secret'
- * })
- * ```
- */
-export interface PdfOpenOptions {
-  /**
-   * Password for opening encrypted PDFs.
-   *
-   * If the PDF is encrypted and no password is provided,
-   * a {@link PdfError} with code `PASSWORD_REQUIRED` will be thrown.
-   *
-   * @example
-   * ```typescript
-   * const pdf = await notoPdf.openPdf('/path/to/encrypted.pdf', {
-   *   password: 'secret'
-   * })
-   * ```
-   */
-  password?: string;
-}
-
-/**
  * Output format for rendered pages.
  *
  * - `'jpeg'` - JPEG format, smaller file size, lossy compression (default)

@@ -63,7 +63,6 @@ export type {
   PdfDocument,
   PdfErrorCode,
   PdfInput,
-  PdfOpenOptions,
   RenderedPage,
   RenderFormat,
   RenderOptions,
