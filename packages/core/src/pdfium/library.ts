@@ -104,7 +104,7 @@ export class PDFiumLibrary {
     }
 
     const { module } = this;
-    const { wasmExports, HEAP32 } = module;
+    const { wasmExports } = module;
 
     // FPDF_LIBRARY_CONFIG structure (version 2):
     // struct {
@@ -119,16 +119,17 @@ export class PDFiumLibrary {
     const configPtr = wasmExports.malloc(CONFIG_SIZE);
 
     // Zero-initialize the config structure
+    // NOTE: Always use module.HEAP32 after malloc as memory may have grown
     for (let i = 0; i < CONFIG_SIZE / 4; i++) {
-      HEAP32[(configPtr >> 2) + i] = 0;
+      module.HEAP32[(configPtr >> 2) + i] = 0;
     }
 
     // Set version to 2
-    HEAP32[configPtr >> 2] = 2;
+    module.HEAP32[configPtr >> 2] = 2;
 
     // Set font paths
     const fontPathsPtr = this.createFontPathsArray(PDFIUM_FONT_PATHS);
-    HEAP32[(configPtr >> 2) + 1] = fontPathsPtr;
+    module.HEAP32[(configPtr >> 2) + 1] = fontPathsPtr;
 
     // Initialize library with config
     module._FPDF_InitLibraryWithConfig(configPtr);
@@ -150,7 +151,7 @@ export class PDFiumLibrary {
    */
   private createFontPathsArray(paths: string[]): number {
     const { module } = this;
-    const { wasmExports, HEAP32 } = module;
+    const { wasmExports } = module;
 
     // Allocate array of pointers (paths.length + 1 for null terminator)
     const arrayPtr = wasmExports.malloc((paths.length + 1) * 4);
@@ -161,12 +162,13 @@ export class PDFiumLibrary {
       const pathBytes = lengthBytesUTF8(path) + 1;
       const pathPtr = wasmExports.malloc(pathBytes);
       this.fontPathPtrs.push(pathPtr);
+      // NOTE: Always use module.HEAPU8/HEAP32 after malloc as memory may have grown
       stringToUTF8(module.HEAPU8, path, pathPtr, pathBytes);
-      HEAP32[(arrayPtr >> 2) + i] = pathPtr;
+      module.HEAP32[(arrayPtr >> 2) + i] = pathPtr;
     }
 
     // Null terminator
-    HEAP32[(arrayPtr >> 2) + paths.length] = 0;
+    module.HEAP32[(arrayPtr >> 2) + paths.length] = 0;
 
     return arrayPtr;
   }
