@@ -1,5 +1,7 @@
 # @noto-pdf-ts/fonts-all
 
+[日本語版 README](./README_ja.md)
+
 Complete collection of Noto Sans fonts for use with [@noto-pdf-ts/core](../core). This package includes fonts for 24 scripts supporting over 100 languages.
 
 ## Installation

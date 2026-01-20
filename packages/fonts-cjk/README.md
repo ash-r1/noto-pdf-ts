@@ -1,5 +1,7 @@
 # @noto-pdf-ts/fonts-cjk
 
+[日本語版 README](./README_ja.md)
+
 Complete CJK (Chinese, Japanese, Korean) font package for use with [@noto-pdf-ts/core](../core). This package includes all CJK language fonts in a single convenient package.
 
 ## Installation

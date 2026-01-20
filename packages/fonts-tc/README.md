@@ -1,5 +1,7 @@
 # @noto-pdf-ts/fonts-tc
 
+[日本語版 README](./README_ja.md)
+
 Noto Sans Traditional Chinese Variable Font for use with [@noto-pdf-ts/core](../core).
 
 ## Installation

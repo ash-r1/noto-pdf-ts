@@ -34,6 +34,32 @@ npm install sharp
 
 > **Note:** sharp uses pre-built binaries for most platforms, so no native compilation is typically required.
 
+### Font Packages
+
+For CJK (Chinese, Japanese, Korean) and other language support, install the appropriate font packages:
+
+```bash
+# Japanese support
+npm install @noto-pdf-ts/fonts-jp@alpha
+
+# Korean support
+npm install @noto-pdf-ts/fonts-kr@alpha
+
+# Simplified Chinese support
+npm install @noto-pdf-ts/fonts-sc@alpha
+
+# Traditional Chinese support
+npm install @noto-pdf-ts/fonts-tc@alpha
+
+# All CJK languages (Japanese, Korean, SC, TC)
+npm install @noto-pdf-ts/fonts-cjk@alpha
+
+# All scripts (24 scripts including Latin, Arabic, Hebrew, Indic, etc.)
+npm install @noto-pdf-ts/fonts-all@alpha
+```
+
+See [Font Packages](#font-packages-1) section below for detailed usage.
+
 ## Usage
 
 ### Basic Usage
@@ -198,6 +224,75 @@ try {
     }
   }
 }
+```
+
+## Font Packages
+
+For proper rendering of CJK (Chinese, Japanese, Korean) and other non-Latin text, you need to register fonts using the `init()` function or `PDFiumLibrary.registerFonts()` method.
+
+### Using init() Function
+
+The simplest way to initialize fonts:
+
+```typescript
+import { init, openPdf } from 'noto-pdf-ts'
+import loadFontJp from '@noto-pdf-ts/fonts-jp'
+
+// Initialize with Japanese font
+await init({
+  fonts: [await loadFontJp()],
+})
+
+// Now you can open and render PDFs with Japanese text
+const pdf = await openPdf('/path/to/document.pdf')
+```
+
+### Using PDFiumLibrary Directly
+
+For more control, use `PDFiumLibrary` directly:
+
+```typescript
+import { PDFiumLibrary, openPdf } from 'noto-pdf-ts'
+import loadFontJp from '@noto-pdf-ts/fonts-jp'
+import loadFontKr from '@noto-pdf-ts/fonts-kr'
+
+// Initialize library
+const library = await PDFiumLibrary.init()
+
+// Register multiple fonts
+library.registerFonts([
+  await loadFontJp(),
+  await loadFontKr(),
+])
+
+// Open and render PDFs
+const pdf = await openPdf('/path/to/document.pdf')
+```
+
+### Available Font Packages
+
+| Package | Languages | Size | Install |
+|---------|-----------|------|---------|
+| [@noto-pdf-ts/fonts-jp](https://www.npmjs.com/package/@noto-pdf-ts/fonts-jp) | Japanese (Hiragana, Katakana, Kanji) | ~9MB | `npm install @noto-pdf-ts/fonts-jp@alpha` |
+| [@noto-pdf-ts/fonts-kr](https://www.npmjs.com/package/@noto-pdf-ts/fonts-kr) | Korean (Hangul, Hanja) | ~9MB | `npm install @noto-pdf-ts/fonts-kr@alpha` |
+| [@noto-pdf-ts/fonts-sc](https://www.npmjs.com/package/@noto-pdf-ts/fonts-sc) | Simplified Chinese (汉字) | ~9MB | `npm install @noto-pdf-ts/fonts-sc@alpha` |
+| [@noto-pdf-ts/fonts-tc](https://www.npmjs.com/package/@noto-pdf-ts/fonts-tc) | Traditional Chinese (漢字) | ~9MB | `npm install @noto-pdf-ts/fonts-tc@alpha` |
+| [@noto-pdf-ts/fonts-cjk](https://www.npmjs.com/package/@noto-pdf-ts/fonts-cjk) | All CJK (JP, KR, SC, TC) | ~37MB | `npm install @noto-pdf-ts/fonts-cjk@alpha` |
+| [@noto-pdf-ts/fonts-all](https://www.npmjs.com/package/@noto-pdf-ts/fonts-all) | 24 scripts (Latin, CJK, Arabic, Hebrew, Indic, etc.) | ~300MB | `npm install @noto-pdf-ts/fonts-all@alpha` |
+
+### Using fonts-all with Tree Shaking
+
+The `@noto-pdf-ts/fonts-all` package supports tree shaking for optimal bundle size:
+
+```typescript
+import { init } from 'noto-pdf-ts'
+import loadJapanese from '@noto-pdf-ts/fonts-all/japanese'
+import loadArabic from '@noto-pdf-ts/fonts-all/arabic'
+
+// Only loads Japanese and Arabic fonts
+await init({
+  fonts: await Promise.all([loadJapanese(), loadArabic()]),
+})
 ```
 
 ## Requirements
