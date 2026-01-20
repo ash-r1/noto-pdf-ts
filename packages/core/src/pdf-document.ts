@@ -53,9 +53,9 @@ function convertBgraToRgba(bgra: Uint8Array): Uint8Array {
  * @returns Promise resolving to the PDFium library instance
  * @internal
  */
-async function getLibrary(library?: PDFiumLibrary): Promise<PDFiumLibrary> {
+function getLibrary(library?: PDFiumLibrary): Promise<PDFiumLibrary> {
   if (library) {
-    return library;
+    return Promise.resolve(library);
   }
   return PDFiumLibrary.init();
 }
