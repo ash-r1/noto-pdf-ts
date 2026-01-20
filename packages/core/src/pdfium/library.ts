@@ -26,12 +26,18 @@ type LoadPdfiumFn = (options?: { locateFile?: (path: string) => string }) => Pro
  *
  * Manages the lifecycle of the PDFium WASM module and provides
  * document loading capabilities.
+ *
+ * This class uses a singleton pattern - `init()` returns the same
+ * instance across calls. Use `create()` if you need a separate instance.
  */
 export class PDFiumLibrary {
   private readonly module: PDFiumModule;
   private initialized = false;
   /** Pointers to font path strings that need to be freed on destroy */
   private fontPathPtrs: number[] = [];
+
+  /** Singleton instance */
+  private static instance: PDFiumLibrary | null = null;
 
   private constructor(module: PDFiumModule) {
     this.module = module;
@@ -64,9 +70,64 @@ export class PDFiumLibrary {
    * ```
    */
   public static async init(): Promise<PDFiumLibrary> {
+    if (PDFiumLibrary.instance) {
+      return PDFiumLibrary.instance;
+    }
+
     // Dynamic import of lite variant WASM loader
     const { loadPdfiumLite } = await import('./wasm-lite.js');
+    const library = await PDFiumLibrary.initWithLoader(loadPdfiumLite);
+    PDFiumLibrary.instance = library;
+    return library;
+  }
+
+  /**
+   * Creates a new, independent PDFium library instance.
+   *
+   * Unlike `init()`, this method always creates a fresh instance.
+   * Useful for advanced use cases where you need isolated library state.
+   *
+   * **Important:** You are responsible for calling `destroy()` on instances
+   * created with this method.
+   *
+   * @returns Promise resolving to a new PDFiumLibrary instance
+   */
+  public static async create(): Promise<PDFiumLibrary> {
+    const { loadPdfiumLite } = await import('./wasm-lite.js');
     return PDFiumLibrary.initWithLoader(loadPdfiumLite);
+  }
+
+  /**
+   * Resets the singleton library instance.
+   *
+   * This destroys the current singleton instance and clears it,
+   * allowing a fresh instance to be created on the next `init()` call.
+   *
+   * Useful for long-running processes to recover from WASM memory
+   * fragmentation or "memory access out of bounds" errors.
+   *
+   * @example
+   * ```typescript
+   * // In a long-running process, periodically reset the library
+   * PDFiumLibrary.reset();
+   * const library = await PDFiumLibrary.init();
+   * library.registerFonts([await loadFontJp()]);
+   * ```
+   */
+  public static reset(): void {
+    if (PDFiumLibrary.instance) {
+      PDFiumLibrary.instance.destroy();
+      PDFiumLibrary.instance = null;
+    }
+  }
+
+  /**
+   * Gets the singleton instance if it exists, or null.
+   *
+   * @returns The singleton instance or null
+   */
+  public static getInstance(): PDFiumLibrary | null {
+    return PDFiumLibrary.instance;
   }
 
   /**

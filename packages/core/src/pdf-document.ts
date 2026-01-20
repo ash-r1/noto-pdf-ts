@@ -45,22 +45,19 @@ function convertBgraToRgba(bgra: Uint8Array): Uint8Array {
 }
 
 /**
- * Cached PDFium library instance.
- * @internal
- */
-let libraryInstance: PDFiumLibrary | null = null;
-
-/**
- * Gets or initializes the PDFium library instance.
+ * Gets the PDFium library instance.
  *
+ * Uses the singleton from PDFiumLibrary.init() or the provided library.
+ *
+ * @param library - Optional library instance to use
  * @returns Promise resolving to the PDFium library instance
  * @internal
  */
-async function getLibrary(): Promise<PDFiumLibrary> {
-  if (!libraryInstance) {
-    libraryInstance = await PDFiumLibrary.init();
+async function getLibrary(library?: PDFiumLibrary): Promise<PDFiumLibrary> {
+  if (library) {
+    return library;
   }
-  return libraryInstance;
+  return PDFiumLibrary.init();
 }
 
 /**
@@ -112,7 +109,7 @@ export class PdfDocumentImpl implements PdfDocument {
     options: PdfOpenOptions = {},
   ): Promise<PdfDocumentImpl> {
     const data = await resolveInput(input);
-    const library = await getLibrary();
+    const library = await getLibrary(options.library);
 
     try {
       const document = library.loadDocument(data, options.password);

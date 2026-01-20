@@ -63,6 +63,26 @@ export interface PdfOpenOptions {
    * ```
    */
   password?: string;
+
+  /**
+   * PDFium library instance to use for opening the document.
+   *
+   * If not provided, the singleton instance from `PDFiumLibrary.init()` is used.
+   * This is useful when you need to use a specific library instance with
+   * custom font configuration.
+   *
+   * @example
+   * ```typescript
+   * import { PDFiumLibrary, openPdf } from '@noto-pdf-ts/core'
+   * import loadFontJp from '@noto-pdf-ts/fonts-jp'
+   *
+   * const library = await PDFiumLibrary.init()
+   * library.registerFonts([await loadFontJp()])
+   *
+   * const pdf = await openPdf('/path/to/japanese.pdf', { library })
+   * ```
+   */
+  library?: import('./pdfium/library.js').PDFiumLibrary;
 }
 
 /**
