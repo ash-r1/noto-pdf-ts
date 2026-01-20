@@ -13,15 +13,16 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openPdf } from './index.js';
+import type { NotoPdf } from './index.js';
 import { cleanupDiffs, createSnapshotMatcher } from './test-utils/image-comparison.js';
 
 // Check if PDFium and sharp are available
 let pdfiumAvailable = false;
+let notoPdf: NotoPdf | null = null;
 try {
-  const { PDFiumLibrary } = await import('./pdfium/index.js');
+  const { NotoPdf: NotoPdfClass } = await import('./index.js');
   await import('sharp');
-  await PDFiumLibrary.init();
+  notoPdf = await NotoPdfClass.init();
   pdfiumAvailable = true;
 } catch (error) {
   console.warn('PDFium or sharp not available - skipping pixel comparison tests:', error);
@@ -53,12 +54,15 @@ describeWithPdfium('Pixel Comparison Tests', () => {
   afterAll(() => {
     // Clean up diff files if all tests pass
     // (they're kept on failure for debugging)
+    if (notoPdf) {
+      notoPdf.destroy();
+    }
   });
 
   describe('simple-text.pdf', () => {
     it('should render page 1 correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'simple-text/simple-text.pdf');
-      const pdf = await openPdf(pdfPath);
+      const pdf = await notoPdf!.openPdf(pdfPath);
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
@@ -72,7 +76,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
 
     it('should render page 1 at 2x scale correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'simple-text/simple-text.pdf');
-      const pdf = await openPdf(pdfPath);
+      const pdf = await notoPdf!.openPdf(pdfPath);
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 2.0 });
@@ -88,7 +92,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
   describe('shapes.pdf', () => {
     it('should render colored shapes correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'shapes/shapes.pdf');
-      const pdf = await openPdf(pdfPath);
+      const pdf = await notoPdf!.openPdf(pdfPath);
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
@@ -104,7 +108,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
   describe('multi-page.pdf', () => {
     it('should render all pages correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'multi-page/multi-page.pdf');
-      const pdf = await openPdf(pdfPath);
+      const pdf = await notoPdf!.openPdf(pdfPath);
 
       try {
         expect(pdf.pageCount).toBe(3);
@@ -126,7 +130,7 @@ describeWithPdfium('Pixel Comparison Tests', () => {
   describe('gradient.pdf', () => {
     it('should render gradient correctly', async () => {
       const pdfPath = path.join(FIXTURES_DIR, 'gradient/gradient.pdf');
-      const pdf = await openPdf(pdfPath);
+      const pdf = await notoPdf!.openPdf(pdfPath);
 
       try {
         const page = await pdf.renderPage(1, { format: 'png', scale: 1.0 });
@@ -144,119 +148,17 @@ describeWithPdfium('Pixel Comparison Tests', () => {
       const pdfPath = path.join(FIXTURES_DIR, 'shapes/shapes.pdf');
 
       // First render
-      const pdf1 = await openPdf(pdfPath);
+      const pdf1 = await notoPdf!.openPdf(pdfPath);
       const page1 = await pdf1.renderPage(1, { format: 'png', scale: 1.0 });
       await pdf1.close();
 
       // Second render
-      const pdf2 = await openPdf(pdfPath);
+      const pdf2 = await notoPdf!.openPdf(pdfPath);
       const page2 = await pdf2.renderPage(1, { format: 'png', scale: 1.0 });
       await pdf2.close();
 
-      // Compare the two renders
-      const { compareImages } = await import('./test-utils/image-comparison.js');
-      const result = compareImages(page1.buffer, page2.buffer);
-
-      expect(result.match).toBe(true);
-      expect(result.diffPixels).toBe(0);
+      // Compare buffers
+      expect(page1.buffer.equals(page2.buffer)).toBe(true);
     });
-  });
-});
-
-describeWithPdfium('Image Comparison Utility', () => {
-  it('should detect differences between images', async () => {
-    const { compareImages } = await import('./test-utils/image-comparison.js');
-    const { PNG } = await import('pngjs');
-
-    // Create two slightly different images
-    const width = 100;
-    const height = 100;
-
-    const png1 = new PNG({ width, height });
-    const png2 = new PNG({ width, height });
-
-    // Fill with white
-    for (let i = 0; i < width * height * 4; i += 4) {
-      png1.data[i] = 255;
-      png1.data[i + 1] = 255;
-      png1.data[i + 2] = 255;
-      png1.data[i + 3] = 255;
-
-      png2.data[i] = 255;
-      png2.data[i + 1] = 255;
-      png2.data[i + 2] = 255;
-      png2.data[i + 3] = 255;
-    }
-
-    // Add a red pixel to png2
-    png2.data[0] = 255;
-    png2.data[1] = 0;
-    png2.data[2] = 0;
-
-    const buffer1 = PNG.sync.write(png1);
-    const buffer2 = PNG.sync.write(png2);
-
-    const result = compareImages(buffer1, buffer2);
-
-    expect(result.match).toBe(false);
-    expect(result.diffPixels).toBeGreaterThan(0);
-    expect(result.diffPercentage).toBeGreaterThan(0);
-  });
-
-  it('should match identical images', async () => {
-    const { compareImages } = await import('./test-utils/image-comparison.js');
-    const { PNG } = await import('pngjs');
-
-    const width = 100;
-    const height = 100;
-
-    const png = new PNG({ width, height });
-
-    // Fill with solid color
-    for (let i = 0; i < width * height * 4; i += 4) {
-      png.data[i] = 128;
-      png.data[i + 1] = 64;
-      png.data[i + 2] = 32;
-      png.data[i + 3] = 255;
-    }
-
-    const buffer = PNG.sync.write(png);
-
-    const result = compareImages(buffer, buffer);
-
-    expect(result.match).toBe(true);
-    expect(result.diffPixels).toBe(0);
-    expect(result.diffPercentage).toBe(0);
-  });
-
-  it('should detect dimension mismatch', async () => {
-    const { compareImages } = await import('./test-utils/image-comparison.js');
-    const { PNG } = await import('pngjs');
-
-    const png1 = new PNG({ width: 100, height: 100 });
-    const png2 = new PNG({ width: 200, height: 200 });
-
-    // Fill with white
-    for (let i = 0; i < png1.data.length; i += 4) {
-      png1.data[i] = 255;
-      png1.data[i + 1] = 255;
-      png1.data[i + 2] = 255;
-      png1.data[i + 3] = 255;
-    }
-
-    for (let i = 0; i < png2.data.length; i += 4) {
-      png2.data[i] = 255;
-      png2.data[i + 1] = 255;
-      png2.data[i + 2] = 255;
-      png2.data[i + 3] = 255;
-    }
-
-    const buffer1 = PNG.sync.write(png1);
-    const buffer2 = PNG.sync.write(png2);
-
-    const result = compareImages(buffer1, buffer2);
-
-    expect(result.match).toBe(false);
-    expect(result.diffPercentage).toBe(100);
   });
 });

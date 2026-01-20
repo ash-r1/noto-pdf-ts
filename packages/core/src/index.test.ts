@@ -1,13 +1,16 @@
 import { PDFDocument, rgb } from 'pdf-lib';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { NotoPdf } from './index.js';
 
 // Check if PDFium and sharp are available before running tests
 let pdfiumAvailable = false;
+let notoPdf: NotoPdf | null = null;
+
 try {
-  // Try to import PDFium and sharp to check if they work
-  const { PDFiumLibrary } = await import('./pdfium/index.js');
+  // Try to import NotoPdf and sharp to check if they work
+  const { NotoPdf: NotoPdfClass } = await import('./index.js');
   await import('sharp');
-  await PDFiumLibrary.init();
+  notoPdf = await NotoPdfClass.init();
   pdfiumAvailable = true;
 } catch (error) {
   console.warn('PDFium or sharp not available - skipping rendering tests:', error);
@@ -51,41 +54,44 @@ beforeAll(async () => {
   multiPagePdf = await doc2.save();
 });
 
-describeWithPdfium('openPdf', () => {
+afterAll(() => {
+  if (notoPdf) {
+    notoPdf.destroy();
+  }
+});
+
+describeWithPdfium('NotoPdf.openPdf', () => {
   it('should open a PDF from Uint8Array', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(singlePagePdf);
+    const pdf = await notoPdf!.openPdf(singlePagePdf);
     expect(pdf.pageCount).toBe(1);
     await pdf.close();
   });
 
   it('should open a PDF from Buffer', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(Buffer.from(singlePagePdf));
+    const pdf = await notoPdf!.openPdf(Buffer.from(singlePagePdf));
     expect(pdf.pageCount).toBe(1);
     await pdf.close();
   });
 
   it('should open a PDF from ArrayBuffer', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(singlePagePdf.buffer);
+    const pdf = await notoPdf!.openPdf(singlePagePdf.buffer);
     expect(pdf.pageCount).toBe(1);
     await pdf.close();
   });
 
   it('should throw FILE_NOT_FOUND for non-existent file', async () => {
-    const { openPdf, PdfError } = await import('./index.js');
-    await expect(openPdf('/non/existent/file.pdf')).rejects.toThrow(PdfError);
-    await expect(openPdf('/non/existent/file.pdf')).rejects.toMatchObject({
+    const { PdfError } = await import('./index.js');
+    await expect(notoPdf!.openPdf('/non/existent/file.pdf')).rejects.toThrow(PdfError);
+    await expect(notoPdf!.openPdf('/non/existent/file.pdf')).rejects.toMatchObject({
       code: 'FILE_NOT_FOUND',
     });
   });
 
   it('should throw INVALID_PDF for invalid data', async () => {
-    const { openPdf, PdfError } = await import('./index.js');
+    const { PdfError } = await import('./index.js');
     const invalidData = new Uint8Array([0, 1, 2, 3, 4, 5]);
-    await expect(openPdf(invalidData)).rejects.toThrow(PdfError);
-    await expect(openPdf(invalidData)).rejects.toMatchObject({
+    await expect(notoPdf!.openPdf(invalidData)).rejects.toThrow(PdfError);
+    await expect(notoPdf!.openPdf(invalidData)).rejects.toMatchObject({
       code: 'INVALID_PDF',
     });
   });
@@ -93,15 +99,13 @@ describeWithPdfium('openPdf', () => {
 
 describeWithPdfium('pageCount', () => {
   it('should return correct page count for single page PDF', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(singlePagePdf);
+    const pdf = await notoPdf!.openPdf(singlePagePdf);
     expect(pdf.pageCount).toBe(1);
     await pdf.close();
   });
 
   it('should return correct page count for multi-page PDF', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(multiPagePdf);
+    const pdf = await notoPdf!.openPdf(multiPagePdf);
     expect(pdf.pageCount).toBe(5);
     await pdf.close();
   });
@@ -109,8 +113,7 @@ describeWithPdfium('pageCount', () => {
 
 describeWithPdfium('renderPage', () => {
   it('should render a single page to JPEG', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(singlePagePdf);
+    const pdf = await notoPdf!.openPdf(singlePagePdf);
     const page = await pdf.renderPage(1);
 
     expect(page.pageNumber).toBe(1);
@@ -127,8 +130,7 @@ describeWithPdfium('renderPage', () => {
   });
 
   it('should render a single page to PNG', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(singlePagePdf);
+    const pdf = await notoPdf!.openPdf(singlePagePdf);
     const page = await pdf.renderPage(1, { format: 'png' });
 
     expect(page.buffer).toBeInstanceOf(Buffer);
@@ -143,8 +145,7 @@ describeWithPdfium('renderPage', () => {
   });
 
   it('should respect scale option', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(singlePagePdf);
+    const pdf = await notoPdf!.openPdf(singlePagePdf);
 
     const page1 = await pdf.renderPage(1, { scale: 1.0 });
     const page2 = await pdf.renderPage(1, { scale: 2.0 });
@@ -156,8 +157,7 @@ describeWithPdfium('renderPage', () => {
   });
 
   it('should throw INVALID_PAGE_NUMBER for invalid page', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(singlePagePdf);
+    const pdf = await notoPdf!.openPdf(singlePagePdf);
 
     await expect(pdf.renderPage(0)).rejects.toMatchObject({
       code: 'INVALID_PAGE_NUMBER',
@@ -172,8 +172,7 @@ describeWithPdfium('renderPage', () => {
 
 describeWithPdfium('renderPages', () => {
   it('should render all pages using async generator', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(multiPagePdf);
+    const pdf = await notoPdf!.openPdf(multiPagePdf);
     const pages: { pageNumber: number; buffer: Buffer }[] = [];
 
     for await (const page of pdf.renderPages()) {
@@ -193,8 +192,7 @@ describeWithPdfium('renderPages', () => {
   });
 
   it('should render specific pages using array', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(multiPagePdf);
+    const pdf = await notoPdf!.openPdf(multiPagePdf);
     const pages: number[] = [];
 
     for await (const page of pdf.renderPages({ pages: [1, 3, 5] })) {
@@ -206,8 +204,7 @@ describeWithPdfium('renderPages', () => {
   });
 
   it('should render page range', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(multiPagePdf);
+    const pdf = await notoPdf!.openPdf(multiPagePdf);
     const pages: number[] = [];
 
     for await (const page of pdf.renderPages({ pages: { start: 2, end: 4 } })) {
@@ -219,32 +216,10 @@ describeWithPdfium('renderPages', () => {
   });
 });
 
-describeWithPdfium('renderPdfPages', () => {
-  it('should render all pages and auto-close', async () => {
-    const { renderPdfPages } = await import('./index.js');
-    const pages: number[] = [];
-
-    for await (const page of renderPdfPages(multiPagePdf)) {
-      pages.push(page.pageNumber);
-    }
-
-    expect(pages).toEqual([1, 2, 3, 4, 5]);
-  });
-});
-
-describeWithPdfium('getPageCount', () => {
-  it('should return page count without rendering', async () => {
-    const { getPageCount } = await import('./index.js');
-    const count = await getPageCount(multiPagePdf);
-    expect(count).toBe(5);
-  });
-});
-
 describeWithPdfium('AsyncDisposable', () => {
   it('should support await using syntax', async () => {
-    const { openPdf } = await import('./index.js');
     // Using manual Symbol.asyncDispose for compatibility
-    const pdf = await openPdf(singlePagePdf);
+    const pdf = await notoPdf!.openPdf(singlePagePdf);
     expect(pdf.pageCount).toBe(1);
     await pdf[Symbol.asyncDispose]();
   });
@@ -252,8 +227,8 @@ describeWithPdfium('AsyncDisposable', () => {
 
 describeWithPdfium('document lifecycle', () => {
   it('should throw DOCUMENT_CLOSED after close', async () => {
-    const { openPdf, PdfError } = await import('./index.js');
-    const pdf = await openPdf(singlePagePdf);
+    const { PdfError } = await import('./index.js');
+    const pdf = await notoPdf!.openPdf(singlePagePdf);
     await pdf.close();
 
     expect(() => pdf.pageCount).toThrow(PdfError);
@@ -261,9 +236,41 @@ describeWithPdfium('document lifecycle', () => {
   });
 
   it('should be safe to call close multiple times', async () => {
-    const { openPdf } = await import('./index.js');
-    const pdf = await openPdf(singlePagePdf);
+    const pdf = await notoPdf!.openPdf(singlePagePdf);
     await pdf.close();
     await pdf.close(); // Should not throw
+  });
+});
+
+describeWithPdfium('NotoPdf lifecycle', () => {
+  it('should create independent instances', async () => {
+    const { NotoPdf: NotoPdfClass } = await import('./index.js');
+
+    const instance1 = await NotoPdfClass.init();
+    const instance2 = await NotoPdfClass.init();
+
+    expect(instance1).not.toBe(instance2);
+
+    instance1.destroy();
+    instance2.destroy();
+  });
+
+  it('should throw after destroy', async () => {
+    const { NotoPdf: NotoPdfClass } = await import('./index.js');
+
+    const instance = await NotoPdfClass.init();
+    instance.destroy();
+
+    await expect(instance.openPdf(singlePagePdf)).rejects.toThrow('destroyed');
+  });
+
+  it('should allow registering fonts after init', async () => {
+    const { NotoPdf: NotoPdfClass } = await import('./index.js');
+
+    const instance = await NotoPdfClass.init();
+    // Should not throw - even with empty fonts array
+    instance.registerFonts([]);
+
+    instance.destroy();
   });
 });

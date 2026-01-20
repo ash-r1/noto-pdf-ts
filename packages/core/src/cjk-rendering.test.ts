@@ -13,15 +13,16 @@
 
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openPdf } from './index.js';
+import type { NotoPdf } from './index.js';
 import { cleanupDiffs, createSnapshotMatcher } from './test-utils/image-comparison.js';
 
 // Check if PDFium and sharp are available
 let pdfiumAvailable = false;
+let notoPdf: NotoPdf | null = null;
 try {
-  const { PDFiumLibrary } = await import('./pdfium/index.js');
+  const { NotoPdf: NotoPdfClass } = await import('./index.js');
   await import('sharp');
-  await PDFiumLibrary.init();
+  notoPdf = await NotoPdfClass.init();
   pdfiumAvailable = true;
 } catch (error) {
   console.warn('PDFium or sharp not available - skipping CJK rendering tests:', error);
@@ -53,12 +54,15 @@ interface TestAllPagesOptions {
  * Helper function to test all pages of a PDF.
  * Snapshots are stored alongside PDFs: <pdfDir>/snapshots/<pageNum>.png
  */
-async function testAllPages(pdfPath: string, options: TestAllPagesOptions = {}) {
+async function testAllPages(pdfPath: string, options: TestAllPagesOptions = {}): Promise<number> {
+  if (!notoPdf) {
+    throw new Error('NotoPdf not initialized');
+  }
   const { maxPages, ignoreMissingGlyphs } = options;
   // Get the relative path from FIXTURES_DIR to the PDF's directory
   const pdfDir = path.dirname(pdfPath);
   const relativePdfDir = path.relative(FIXTURES_DIR, pdfDir);
-  const pdf = await openPdf(pdfPath);
+  const pdf = await notoPdf.openPdf(pdfPath);
 
   try {
     const totalPages = pdf.pageCount;
@@ -94,6 +98,9 @@ describeWithPdfium('CJK Rendering Tests', () => {
 
   afterAll(() => {
     // Diff files are kept on failure for debugging
+    if (notoPdf) {
+      notoPdf.destroy();
+    }
   });
 
   describe('Japanese PDFs', () => {
@@ -187,12 +194,12 @@ describeWithPdfium('CJK Rendering Tests', () => {
       const pdfPath = path.join(FIXTURES_DIR, 'jp/ichiji/ichiji.pdf');
 
       // First render
-      const pdf1 = await openPdf(pdfPath);
+      const pdf1 = await notoPdf!.openPdf(pdfPath);
       const page1 = await pdf1.renderPage(1, { format: 'png', scale: 1.0 });
       await pdf1.close();
 
       // Second render
-      const pdf2 = await openPdf(pdfPath);
+      const pdf2 = await notoPdf!.openPdf(pdfPath);
       const page2 = await pdf2.renderPage(1, { format: 'png', scale: 1.0 });
       await pdf2.close();
 
@@ -208,12 +215,12 @@ describeWithPdfium('CJK Rendering Tests', () => {
       const pdfPath = path.join(FIXTURES_DIR, 'cn/ap-chinese/ap-chinese.pdf');
 
       // First render
-      const pdf1 = await openPdf(pdfPath);
+      const pdf1 = await notoPdf!.openPdf(pdfPath);
       const page1 = await pdf1.renderPage(1, { format: 'png', scale: 1.0 });
       await pdf1.close();
 
       // Second render
-      const pdf2 = await openPdf(pdfPath);
+      const pdf2 = await notoPdf!.openPdf(pdfPath);
       const page2 = await pdf2.renderPage(1, { format: 'png', scale: 1.0 });
       await pdf2.close();
 
@@ -229,7 +236,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
       const pdfPath = path.join(FIXTURES_WITH_MISSING_GLYPHS_DIR, 'kr/eps-hangul/eps-hangul.pdf');
 
       // First render (ignoreMissingGlyphs because this PDF has incomplete Unicode mappings)
-      const pdf1 = await openPdf(pdfPath);
+      const pdf1 = await notoPdf!.openPdf(pdfPath);
       const page1 = await pdf1.renderPage(1, {
         format: 'png',
         scale: 1.0,
@@ -238,7 +245,7 @@ describeWithPdfium('CJK Rendering Tests', () => {
       await pdf1.close();
 
       // Second render
-      const pdf2 = await openPdf(pdfPath);
+      const pdf2 = await notoPdf!.openPdf(pdfPath);
       const page2 = await pdf2.renderPage(1, {
         format: 'png',
         scale: 1.0,

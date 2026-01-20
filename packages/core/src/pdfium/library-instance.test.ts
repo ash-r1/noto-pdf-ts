@@ -1,130 +1,136 @@
 /**
- * Tests for PDFiumLibrary singleton pattern and instance management.
+ * Tests for PDFiumLibrary instance management.
  *
  * These tests verify that:
- * - init() returns the same singleton instance
- * - reset() clears the singleton
- * - openPdf() uses the singleton correctly
+ * - init() creates new independent instances
+ * - destroy() properly cleans up resources
+ * - NotoPdf provides proper high-level API
  *
- * Note: Tests for create() are limited due to WASM memory constraints.
- * Each WASM instance consumes significant memory.
+ * Note: Tests create minimal WASM instances due to memory constraints.
  */
 
 import { PDFDocument } from 'pdf-lib';
 import { afterEach, describe, expect, it } from 'vitest';
 import { PDFiumLibrary } from './library.js';
 
-// Reset library after each test to ensure isolation
+// Track created libraries for cleanup
+const libraries: PDFiumLibrary[] = [];
+
 afterEach(() => {
-  PDFiumLibrary.reset();
+  // Clean up all created libraries
+  for (const lib of libraries) {
+    lib.destroy();
+  }
+  libraries.length = 0;
 });
 
-describe('PDFiumLibrary singleton', () => {
-  it('should return the same instance on multiple init() calls', async () => {
+describe('PDFiumLibrary instance management', () => {
+  it('should create new instance on each init() call', async () => {
     const library1 = await PDFiumLibrary.init();
+    libraries.push(library1);
+
     const library2 = await PDFiumLibrary.init();
+    libraries.push(library2);
 
-    expect(library1).toBe(library2);
+    expect(library1).not.toBe(library2);
   });
 
-  it('should return the instance via getInstance() after init()', async () => {
-    expect(PDFiumLibrary.getInstance()).toBeNull();
-
+  it('should load PDF documents', async () => {
     const library = await PDFiumLibrary.init();
+    libraries.push(library);
 
-    expect(PDFiumLibrary.getInstance()).toBe(library);
+    // Create a test PDF
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.addPage([612, 792]);
+    const pdfData = await pdfDoc.save();
+
+    // Load document
+    const doc = library.loadDocument(new Uint8Array(pdfData));
+    expect(doc.getPageCount()).toBe(1);
+    doc.destroy();
   });
 
-  it('should clear the singleton on reset()', async () => {
-    await PDFiumLibrary.init();
-    expect(PDFiumLibrary.getInstance()).not.toBeNull();
+  it('should support font registration', async () => {
+    const library = await PDFiumLibrary.init();
+    libraries.push(library);
 
-    PDFiumLibrary.reset();
-
-    expect(PDFiumLibrary.getInstance()).toBeNull();
+    // Should not throw when registering empty fonts
+    library.registerFonts([]);
   });
 
-  it('should handle multiple reset() calls safely', () => {
-    // reset() should be idempotent
-    PDFiumLibrary.reset();
-    PDFiumLibrary.reset();
-    PDFiumLibrary.reset();
+  it('should be safe to call destroy multiple times', async () => {
+    const library = await PDFiumLibrary.init();
+    // Don't add to libraries array since we're manually destroying
 
-    expect(PDFiumLibrary.getInstance()).toBeNull();
+    library.destroy();
+    library.destroy(); // Should not throw
   });
 });
 
-describe('openPdf with library option', () => {
-  it('should use the singleton library by default', async () => {
-    // Initialize singleton first
-    const library = await PDFiumLibrary.init();
+describe('NotoPdf high-level API', () => {
+  it('should create NotoPdf instances', async () => {
+    const { NotoPdf } = await import('../index.js');
+
+    const notoPdf = await NotoPdf.init();
 
     // Create a test PDF
     const pdfDoc = await PDFDocument.create();
     pdfDoc.addPage([612, 792]);
     const pdfData = await pdfDoc.save();
 
-    // Import openPdf
-    const { openPdf } = await import('../index.js');
-
-    // Open PDF (should use singleton)
-    const pdf = await openPdf(pdfData);
+    const pdf = await notoPdf.openPdf(pdfData);
     expect(pdf.pageCount).toBe(1);
     await pdf.close();
 
-    // Verify singleton is still the same
-    expect(PDFiumLibrary.getInstance()).toBe(library);
+    notoPdf.destroy();
   });
 
-  it('should use provided library instance when specified', async () => {
-    // Use the singleton as the "provided" library
-    const library = await PDFiumLibrary.init();
+  it('should support fonts option in init', async () => {
+    const { NotoPdf } = await import('../index.js');
 
-    // Create a test PDF
-    const pdfDoc = await PDFDocument.create();
-    pdfDoc.addPage([612, 792]);
-    const pdfData = await pdfDoc.save();
-
-    // Import openPdf
-    const { openPdf } = await import('../index.js');
-
-    // Open PDF with explicit library parameter
-    const pdf = await openPdf(pdfData, { library });
-    expect(pdf.pageCount).toBe(1);
-    await pdf.close();
+    // Should work with empty fonts array
+    const notoPdf = await NotoPdf.init({ fonts: [] });
+    notoPdf.destroy();
   });
-});
 
-describe('memory management for long-running processes', () => {
-  it('should allow recovery via reset() after processing PDFs', async () => {
-    // Initialize
-    const library = await PDFiumLibrary.init();
-    expect(PDFiumLibrary.getInstance()).toBe(library);
+  it('should throw when using destroyed instance', async () => {
+    const { NotoPdf } = await import('../index.js');
+
+    const notoPdf = await NotoPdf.init();
+    notoPdf.destroy();
 
     // Create a test PDF
     const pdfDoc = await PDFDocument.create();
     pdfDoc.addPage([612, 792]);
     const pdfData = await pdfDoc.save();
 
-    const { openPdf } = await import('../index.js');
+    await expect(notoPdf.openPdf(pdfData)).rejects.toThrow('destroyed');
+  });
 
-    // Process some PDFs
-    for (let i = 0; i < 3; i++) {
-      const pdf = await openPdf(pdfData);
-      expect(pdf.pageCount).toBe(1);
-      await pdf.close();
-    }
+  it('should process multiple PDFs with same instance', async () => {
+    const { NotoPdf } = await import('../index.js');
 
-    // Reset library (simulate recovery from memory issues)
-    PDFiumLibrary.reset();
-    expect(PDFiumLibrary.getInstance()).toBeNull();
+    const notoPdf = await NotoPdf.init();
 
-    // Re-initialize and verify we can continue processing
-    await PDFiumLibrary.init();
-    expect(PDFiumLibrary.getInstance()).not.toBeNull();
+    // Create test PDFs
+    const pdfDoc1 = await PDFDocument.create();
+    pdfDoc1.addPage([612, 792]);
+    const pdfData1 = await pdfDoc1.save();
 
-    const pdf = await openPdf(pdfData);
-    expect(pdf.pageCount).toBe(1);
-    await pdf.close();
+    const pdfDoc2 = await PDFDocument.create();
+    pdfDoc2.addPage([612, 792]);
+    pdfDoc2.addPage([612, 792]);
+    const pdfData2 = await pdfDoc2.save();
+
+    // Process multiple PDFs
+    const pdf1 = await notoPdf.openPdf(pdfData1);
+    expect(pdf1.pageCount).toBe(1);
+    await pdf1.close();
+
+    const pdf2 = await notoPdf.openPdf(pdfData2);
+    expect(pdf2.pageCount).toBe(2);
+    await pdf2.close();
+
+    notoPdf.destroy();
   });
 });

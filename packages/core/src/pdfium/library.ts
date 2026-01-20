@@ -9,6 +9,13 @@
 import { DEFAULT_FONT_DIR, PDFIUM_FONT_PATHS, registerFonts } from './fonts.js';
 import type { FontConfig, PDFiumModule } from './types.js';
 import { FPDFBitmap, FPDFErrorCode } from './types.js';
+import {
+  decrementRefCount,
+  incrementRefCount,
+  isLibraryInitialized,
+  markLibraryInitialized,
+  resetModuleState,
+} from './wasm-lite.js';
 import { lengthBytesUTF8, stringToUTF8 } from './wasm-utils.js';
 
 /**
@@ -17,27 +24,30 @@ import { lengthBytesUTF8, stringToUTF8 } from './wasm-utils.js';
 const BYTES_PER_PIXEL = 4;
 
 /**
- * Type for WASM loader function.
- */
-type LoadPdfiumFn = (options?: { locateFile?: (path: string) => string }) => Promise<PDFiumModule>;
-
-/**
  * PDFium library instance.
  *
- * Manages the lifecycle of the PDFium WASM module and provides
- * document loading capabilities.
+ * Low-level wrapper around the PDFium WASM module.
+ * Manages the lifecycle of the WASM module and provides document loading capabilities.
  *
- * This class uses a singleton pattern - `init()` returns the same
- * instance across calls. Use `create()` if you need a separate instance.
+ * **Note:** For most use cases, prefer using {@link NotoPdf} which provides
+ * a higher-level, more user-friendly API.
+ *
+ * @example
+ * ```typescript
+ * // Low-level usage (advanced)
+ * const library = await PDFiumLibrary.init()
+ * library.registerFonts([await loadFontJp()])
+ * const doc = library.loadDocument(pdfData)
+ * // ... use doc ...
+ * doc.destroy()
+ * library.destroy()
+ * ```
  */
 export class PDFiumLibrary {
   private readonly module: PDFiumModule;
   private initialized = false;
   /** Pointers to font path strings that need to be freed on destroy */
   private fontPathPtrs: number[] = [];
-
-  /** Singleton instance */
-  private static instance: PDFiumLibrary | null = null;
 
   private constructor(module: PDFiumModule) {
     this.module = module;
@@ -52,13 +62,16 @@ export class PDFiumLibrary {
   }
 
   /**
-   * Initializes the PDFium library.
+   * Initializes a new PDFium library instance.
+   *
+   * Each call creates a new, independent instance. You are responsible
+   * for calling `destroy()` when done to free resources.
    *
    * The core library does not include embedded fonts. Use font packages
    * (e.g., @noto-pdf-ts/fonts-jp) and `registerFonts()` to add fonts
    * manually if needed for rendering PDFs without embedded fonts.
    *
-   * @returns Promise resolving to a PDFiumLibrary instance
+   * @returns Promise resolving to a new PDFiumLibrary instance
    *
    * @example
    * ```typescript
@@ -67,79 +80,17 @@ export class PDFiumLibrary {
    *
    * const library = await PDFiumLibrary.init()
    * library.registerFonts([await loadFontJp()])
+   * // ... use library ...
+   * library.destroy()
    * ```
    */
   public static async init(): Promise<PDFiumLibrary> {
-    if (PDFiumLibrary.instance) {
-      return PDFiumLibrary.instance;
-    }
-
     // Dynamic import of lite variant WASM loader
     const { loadPdfiumLite } = await import('./wasm-lite.js');
-    const library = await PDFiumLibrary.initWithLoader(loadPdfiumLite);
-    PDFiumLibrary.instance = library;
-    return library;
-  }
-
-  /**
-   * Creates a new, independent PDFium library instance.
-   *
-   * Unlike `init()`, this method always creates a fresh instance.
-   * Useful for advanced use cases where you need isolated library state.
-   *
-   * **Important:** You are responsible for calling `destroy()` on instances
-   * created with this method.
-   *
-   * @returns Promise resolving to a new PDFiumLibrary instance
-   */
-  public static async create(): Promise<PDFiumLibrary> {
-    const { loadPdfiumLite } = await import('./wasm-lite.js');
-    return PDFiumLibrary.initWithLoader(loadPdfiumLite);
-  }
-
-  /**
-   * Resets the singleton library instance.
-   *
-   * This destroys the current singleton instance and clears it,
-   * allowing a fresh instance to be created on the next `init()` call.
-   *
-   * Useful for long-running processes to recover from WASM memory
-   * fragmentation or "memory access out of bounds" errors.
-   *
-   * @example
-   * ```typescript
-   * // In a long-running process, periodically reset the library
-   * PDFiumLibrary.reset();
-   * const library = await PDFiumLibrary.init();
-   * library.registerFonts([await loadFontJp()]);
-   * ```
-   */
-  public static reset(): void {
-    if (PDFiumLibrary.instance) {
-      PDFiumLibrary.instance.destroy();
-      PDFiumLibrary.instance = null;
-    }
-  }
-
-  /**
-   * Gets the singleton instance if it exists, or null.
-   *
-   * @returns The singleton instance or null
-   */
-  public static getInstance(): PDFiumLibrary | null {
-    return PDFiumLibrary.instance;
-  }
-
-  /**
-   * Initializes the library with a custom WASM loader.
-   *
-   * @param loadPdfium - Function to load the PDFium WASM module
-   * @returns Promise resolving to a PDFiumLibrary instance
-   */
-  private static async initWithLoader(loadPdfium: LoadPdfiumFn): Promise<PDFiumLibrary> {
-    const module = await loadPdfium();
+    const module = await loadPdfiumLite();
     const library = new PDFiumLibrary(module);
     library.initLibraryConfig();
+    incrementRefCount();
     return library;
   }
 
@@ -158,9 +109,14 @@ export class PDFiumLibrary {
 
   /**
    * Initializes the PDFium library with font path configuration.
+   *
+   * The library is initialized only once, even if multiple PDFiumLibrary
+   * instances are created. This is because PDFium uses global state.
    */
   private initLibraryConfig(): void {
-    if (this.initialized) {
+    // Check global initialization state (shared across instances)
+    if (isLibraryInitialized()) {
+      this.initialized = true;
       return;
     }
 
@@ -199,6 +155,7 @@ export class PDFiumLibrary {
     wasmExports.free(configPtr);
 
     this.initialized = true;
+    markLibraryInitialized();
   }
 
   /**
@@ -294,9 +251,20 @@ export class PDFiumLibrary {
 
   /**
    * Destroys the library and frees resources.
+   *
+   * The underlying PDFium library is only destroyed when all instances
+   * have been destroyed (reference counting).
    */
   public destroy(): void {
-    if (this.initialized && this.module) {
+    if (!this.initialized) {
+      return;
+    }
+
+    this.initialized = false;
+    const shouldCleanup = decrementRefCount();
+
+    if (shouldCleanup) {
+      // Last reference - clean up the shared PDFium library
       this.module._FPDF_DestroyLibrary();
 
       // Free font path memory allocated in createFontPathsArray
@@ -306,7 +274,8 @@ export class PDFiumLibrary {
       }
       this.fontPathPtrs = [];
 
-      this.initialized = false;
+      // Reset module-level state so a new init() works correctly
+      resetModuleState();
     }
   }
 }
