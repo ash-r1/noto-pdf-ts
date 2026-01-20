@@ -6,7 +6,7 @@ A simple and efficient PDF rendering library for Node.js. Convert PDF pages to i
 
 ## Features
 
-- **Simple API** - Open PDFs with `openPdf()` and render pages with `renderPages()`
+- **Simple API** - Initialize with `NotoPdf.init()` and render pages with `renderPages()`
 - **Memory Efficient** - Process pages one at a time using AsyncGenerator
 - **CJK Font Support** - Includes Noto Sans CJK fonts for Japanese, Korean, and Chinese text
 - **TypeScript Native** - Full type definitions included
@@ -56,16 +56,15 @@ Choose the font package(s) you need:
 ## Quick Start
 
 ```typescript
-import { PDFiumLibrary, openPdf } from '@noto-pdf-ts/core'
+import { NotoPdf } from '@noto-pdf-ts/core'
 import loadFontJp from '@noto-pdf-ts/fonts-jp'
 import fs from 'node:fs/promises'
 
-// Initialize library and register Japanese font
-const library = await PDFiumLibrary.init()
-library.registerFonts([await loadFontJp()])
+// Initialize with Japanese font
+const notoPdf = await NotoPdf.init({ fonts: [await loadFontJp()] })
 
 // Open and render PDF
-const pdf = await openPdf('/path/to/document.pdf')
+const pdf = await notoPdf.openPdf('/path/to/document.pdf')
 console.log(`Pages: ${pdf.pageCount}`)
 
 for await (const page of pdf.renderPages({ format: 'jpeg', scale: 1.5 })) {
@@ -73,39 +72,44 @@ for await (const page of pdf.renderPages({ format: 'jpeg', scale: 1.5 })) {
   await fs.writeFile(`page-${page.pageNumber}.jpg`, page.buffer)
 }
 
+// Clean up
 await pdf.close()
+notoPdf.destroy()
 ```
 
 ### Using `await using` (ES2024)
 
 ```typescript
-import { PDFiumLibrary, openPdf } from '@noto-pdf-ts/core'
+import { NotoPdf } from '@noto-pdf-ts/core'
 import loadFontCjk from '@noto-pdf-ts/fonts-cjk'
 
-const library = await PDFiumLibrary.init()
-library.registerFonts([await loadFontCjk()])
-
-// Automatically closes PDF when scope ends
-await using pdf = await openPdf('/path/to/document.pdf')
+// Both NotoPdf and PdfDocument support await using
+await using notoPdf = await NotoPdf.init({ fonts: [await loadFontCjk()] })
+await using pdf = await notoPdf.openPdf('/path/to/document.pdf')
 
 for await (const page of pdf.renderPages()) {
   // Process pages...
 }
+// Automatically closed when scope ends
 ```
 
-### Convenience Functions
+### Processing Multiple PDFs
 
 ```typescript
-import { renderPdfPages, getPageCount } from '@noto-pdf-ts/core'
+import { NotoPdf } from '@noto-pdf-ts/core'
+import loadFontJp from '@noto-pdf-ts/fonts-jp'
 
-// Render all pages in one line (auto-close)
-for await (const page of renderPdfPages('/path/to/document.pdf', { scale: 2 })) {
-  await fs.writeFile(`page-${page.pageNumber}.jpg`, page.buffer)
+const notoPdf = await NotoPdf.init({ fonts: [await loadFontJp()] })
+
+for (const file of pdfFiles) {
+  const pdf = await notoPdf.openPdf(file)
+  for await (const page of pdf.renderPages()) {
+    await fs.writeFile(`${file}-${page.pageNumber}.jpg`, page.buffer)
+  }
+  await pdf.close()
 }
 
-// Just get page count
-const count = await getPageCount('/path/to/document.pdf')
-console.log(`${count} pages`)
+notoPdf.destroy()
 ```
 
 ## API Reference
@@ -123,7 +127,7 @@ If you're upgrading from the previous version of `noto-pdf-ts`, here are the bre
 import { openPdf } from 'noto-pdf-ts'
 
 // After (v1.x)
-import { openPdf } from '@noto-pdf-ts/core'
+import { NotoPdf } from '@noto-pdf-ts/core'
 ```
 
 ### 2. Font Installation Required
@@ -136,30 +140,23 @@ npm install noto-pdf-ts@alpha
 npm install @noto-pdf-ts/core@alpha @noto-pdf-ts/fonts-jp@alpha
 ```
 
-### 3. Initialization Required
+### 3. Instance-Based API
 
 ```typescript
-// Before (v0.x) - no initialization needed
-import { openPdf } from 'noto-pdf-ts'
-const pdf = await openPdf('document.pdf')
-
-// After (v1.x) - must initialize with fonts
+// Before (v0.x) - global functions
 import { PDFiumLibrary, openPdf } from '@noto-pdf-ts/core'
 import loadFontJp from '@noto-pdf-ts/fonts-jp'
 
 const library = await PDFiumLibrary.init()
 library.registerFonts([await loadFontJp()])
 const pdf = await openPdf('document.pdf')
-```
 
-### 4. Entry Point Consolidation
+// After (v1.x) - instance methods
+import { NotoPdf } from '@noto-pdf-ts/core'
+import loadFontJp from '@noto-pdf-ts/fonts-jp'
 
-```typescript
-// Before (v0.x) - lite entry point existed
-import { initLite } from 'noto-pdf-ts/lite'
-
-// After (v1.x) - single entry point
-import { init } from '@noto-pdf-ts/core'
+const notoPdf = await NotoPdf.init({ fonts: [await loadFontJp()] })
+const pdf = await notoPdf.openPdf('document.pdf')
 ```
 
 ## Development

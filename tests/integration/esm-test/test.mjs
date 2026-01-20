@@ -23,25 +23,22 @@ console.log('1. Testing main entry point (@noto-pdf-ts/core)...');
 const main = await import('@noto-pdf-ts/core');
 
 assert.strictEqual(typeof main.VERSION, 'string', 'VERSION should be a string');
+assert.strictEqual(typeof main.NotoPdf, 'function', 'NotoPdf should be a class');
 assert.strictEqual(typeof main.PDFiumLibrary, 'function', 'PDFiumLibrary should be a class');
-assert.strictEqual(typeof main.openPdf, 'function', 'openPdf should be a function');
-assert.strictEqual(typeof main.renderPdfPages, 'function', 'renderPdfPages should be a function');
-assert.strictEqual(typeof main.getPageCount, 'function', 'getPageCount should be a function');
 assert.strictEqual(typeof main.PdfError, 'function', 'PdfError should be a class');
 
 console.log('   - VERSION:', main.VERSION);
+console.log('   - NotoPdf: OK');
 console.log('   - PDFiumLibrary: OK');
-console.log('   - openPdf: OK');
-console.log('   - renderPdfPages: OK');
-console.log('   - getPageCount: OK');
 console.log('   - PdfError: OK');
 console.log('   PASSED\n');
 
 // Test: PDF conversion (verifies WASM loads correctly)
 console.log('2. Testing PDF conversion (WASM loading)...');
 
+const notoPdf = await main.NotoPdf.init();
 const pdfPath = path.join(fixturesDir, 'shapes/shapes.pdf');
-const pdf = await main.openPdf(pdfPath);
+const pdf = await notoPdf.openPdf(pdfPath);
 assert.strictEqual(pdf.pageCount, 1, 'PDF should have 1 page');
 
 let renderedCount = 0;
@@ -56,7 +53,9 @@ for await (const rendered of pdf.renderPages({ format: 'jpeg', scale: 1 })) {
 assert.strictEqual(renderedCount, 1, 'Should have rendered 1 page');
 
 await pdf.close();
+notoPdf.destroy();
 
+console.log('   - NotoPdf initialized: OK');
 console.log('   - PDF opened: OK');
 console.log('   - WASM loaded successfully: OK');
 console.log('   - Page rendered to JPEG: OK');

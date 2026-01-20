@@ -17,15 +17,27 @@ import { lengthBytesUTF8, stringToUTF8 } from './wasm-utils.js';
 const BYTES_PER_PIXEL = 4;
 
 /**
- * Type for WASM loader function.
- */
-type LoadPdfiumFn = (options?: { locateFile?: (path: string) => string }) => Promise<PDFiumModule>;
-
-/**
  * PDFium library instance.
  *
- * Manages the lifecycle of the PDFium WASM module and provides
- * document loading capabilities.
+ * Low-level wrapper around the PDFium WASM module.
+ * Manages the lifecycle of the WASM module and provides document loading capabilities.
+ *
+ * **Note:** For most use cases, prefer using {@link NotoPdf} which provides
+ * a higher-level, more user-friendly API.
+ *
+ * **Important:** Only create one instance per process. Creating multiple instances
+ * will load multiple copies of the WASM module, consuming significant memory.
+ *
+ * @example
+ * ```typescript
+ * // Low-level usage (advanced)
+ * const library = await PDFiumLibrary.init()
+ * library.registerFonts([await loadFontJp()])
+ * const doc = library.loadDocument(pdfData)
+ * // ... use doc ...
+ * doc.destroy()
+ * library.destroy()
+ * ```
  */
 export class PDFiumLibrary {
   private readonly module: PDFiumModule;
@@ -46,13 +58,18 @@ export class PDFiumLibrary {
   }
 
   /**
-   * Initializes the PDFium library.
+   * Initializes a new PDFium library instance.
+   *
+   * Each call creates a new, independent instance with its own WASM module.
+   * You are responsible for calling `destroy()` when done to free resources.
+   *
+   * **Important:** Only create one instance per process to avoid memory issues.
    *
    * The core library does not include embedded fonts. Use font packages
    * (e.g., @noto-pdf-ts/fonts-jp) and `registerFonts()` to add fonts
    * manually if needed for rendering PDFs without embedded fonts.
    *
-   * @returns Promise resolving to a PDFiumLibrary instance
+   * @returns Promise resolving to a new PDFiumLibrary instance
    *
    * @example
    * ```typescript
@@ -61,22 +78,14 @@ export class PDFiumLibrary {
    *
    * const library = await PDFiumLibrary.init()
    * library.registerFonts([await loadFontJp()])
+   * // ... use library ...
+   * library.destroy()
    * ```
    */
   public static async init(): Promise<PDFiumLibrary> {
     // Dynamic import of lite variant WASM loader
     const { loadPdfiumLite } = await import('./wasm-lite.js');
-    return PDFiumLibrary.initWithLoader(loadPdfiumLite);
-  }
-
-  /**
-   * Initializes the library with a custom WASM loader.
-   *
-   * @param loadPdfium - Function to load the PDFium WASM module
-   * @returns Promise resolving to a PDFiumLibrary instance
-   */
-  private static async initWithLoader(loadPdfium: LoadPdfiumFn): Promise<PDFiumLibrary> {
-    const module = await loadPdfium();
+    const module = await loadPdfiumLite();
     const library = new PDFiumLibrary(module);
     library.initLibraryConfig();
     return library;
@@ -104,7 +113,7 @@ export class PDFiumLibrary {
     }
 
     const { module } = this;
-    const { wasmExports, HEAP32 } = module;
+    const { wasmExports } = module;
 
     // FPDF_LIBRARY_CONFIG structure (version 2):
     // struct {
@@ -119,16 +128,17 @@ export class PDFiumLibrary {
     const configPtr = wasmExports.malloc(CONFIG_SIZE);
 
     // Zero-initialize the config structure
+    // NOTE: Always use module.HEAP32 after malloc as memory may have grown
     for (let i = 0; i < CONFIG_SIZE / 4; i++) {
-      HEAP32[(configPtr >> 2) + i] = 0;
+      module.HEAP32[(configPtr >> 2) + i] = 0;
     }
 
     // Set version to 2
-    HEAP32[configPtr >> 2] = 2;
+    module.HEAP32[configPtr >> 2] = 2;
 
     // Set font paths
     const fontPathsPtr = this.createFontPathsArray(PDFIUM_FONT_PATHS);
-    HEAP32[(configPtr >> 2) + 1] = fontPathsPtr;
+    module.HEAP32[(configPtr >> 2) + 1] = fontPathsPtr;
 
     // Initialize library with config
     module._FPDF_InitLibraryWithConfig(configPtr);
@@ -150,7 +160,7 @@ export class PDFiumLibrary {
    */
   private createFontPathsArray(paths: string[]): number {
     const { module } = this;
-    const { wasmExports, HEAP32 } = module;
+    const { wasmExports } = module;
 
     // Allocate array of pointers (paths.length + 1 for null terminator)
     const arrayPtr = wasmExports.malloc((paths.length + 1) * 4);
@@ -161,12 +171,13 @@ export class PDFiumLibrary {
       const pathBytes = lengthBytesUTF8(path) + 1;
       const pathPtr = wasmExports.malloc(pathBytes);
       this.fontPathPtrs.push(pathPtr);
+      // NOTE: Always use module.HEAPU8/HEAP32 after malloc as memory may have grown
       stringToUTF8(module.HEAPU8, path, pathPtr, pathBytes);
-      HEAP32[(arrayPtr >> 2) + i] = pathPtr;
+      module.HEAP32[(arrayPtr >> 2) + i] = pathPtr;
     }
 
     // Null terminator
-    HEAP32[(arrayPtr >> 2) + paths.length] = 0;
+    module.HEAP32[(arrayPtr >> 2) + paths.length] = 0;
 
     return arrayPtr;
   }
@@ -233,17 +244,22 @@ export class PDFiumLibrary {
    * Destroys the library and frees resources.
    */
   public destroy(): void {
-    if (this.initialized && this.module) {
-      this.module._FPDF_DestroyLibrary();
+    if (!this.initialized) {
+      return;
+    }
 
+    this.initialized = false;
+
+    try {
+      this.module._FPDF_DestroyLibrary();
+    } finally {
       // Free font path memory allocated in createFontPathsArray
+      // This runs even if _FPDF_DestroyLibrary() throws
       const { wasmExports } = this.module;
       for (const ptr of this.fontPathPtrs) {
         wasmExports.free(ptr);
       }
       this.fontPathPtrs = [];
-
-      this.initialized = false;
     }
   }
 }

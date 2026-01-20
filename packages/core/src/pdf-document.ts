@@ -12,15 +12,8 @@
 import fs from 'node:fs/promises';
 import sharp from 'sharp';
 import { DEFAULT_RENDER_OPTIONS } from './config.js';
-import { type PDFiumDocument, PDFiumLibrary } from './pdfium/index.js';
-import type {
-  PageRange,
-  PdfDocument,
-  PdfInput,
-  PdfOpenOptions,
-  RenderedPage,
-  RenderOptions,
-} from './types.js';
+import type { PDFiumDocument, PDFiumLibrary } from './pdfium/index.js';
+import type { PageRange, PdfDocument, PdfInput, RenderedPage, RenderOptions } from './types.js';
 import { PdfError } from './types.js';
 
 /**
@@ -42,25 +35,6 @@ function convertBgraToRgba(bgra: Uint8Array): Uint8Array {
     rgba[i + 3] = bgra[i + 3] as number; // A <- A
   }
   return rgba;
-}
-
-/**
- * Cached PDFium library instance.
- * @internal
- */
-let libraryInstance: PDFiumLibrary | null = null;
-
-/**
- * Gets or initializes the PDFium library instance.
- *
- * @returns Promise resolving to the PDFium library instance
- * @internal
- */
-async function getLibrary(): Promise<PDFiumLibrary> {
-  if (!libraryInstance) {
-    libraryInstance = await PDFiumLibrary.init();
-  }
-  return libraryInstance;
 }
 
 /**
@@ -101,21 +75,22 @@ export class PdfDocumentImpl implements PdfDocument {
    * It handles input resolution and error wrapping.
    *
    * @param input - File path, Buffer, Uint8Array, or ArrayBuffer
-   * @param options - Options for opening the PDF
+   * @param library - PDFium library instance to use
+   * @param password - Optional password for encrypted PDFs
    * @returns Promise resolving to a new PdfDocumentImpl instance
    * @throws {@link PdfError} if the PDF cannot be opened
    *
-   * @internal Use {@link openPdf} from the public API instead.
+   * @internal Use {@link NotoPdf.openPdf} from the public API instead.
    */
   public static async open(
     input: PdfInput,
-    options: PdfOpenOptions = {},
+    library: PDFiumLibrary,
+    password?: string,
   ): Promise<PdfDocumentImpl> {
     const data = await resolveInput(input);
-    const library = await getLibrary();
 
     try {
-      const document = library.loadDocument(data, options.password);
+      const document = library.loadDocument(data, password);
       return new PdfDocumentImpl(document);
     } catch (error) {
       throw wrapPdfiumError(error);
