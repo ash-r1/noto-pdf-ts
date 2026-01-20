@@ -249,14 +249,18 @@ export class PDFiumLibrary {
     }
 
     this.initialized = false;
-    this.module._FPDF_DestroyLibrary();
 
-    // Free font path memory allocated in createFontPathsArray
-    const { wasmExports } = this.module;
-    for (const ptr of this.fontPathPtrs) {
-      wasmExports.free(ptr);
+    try {
+      this.module._FPDF_DestroyLibrary();
+    } finally {
+      // Free font path memory allocated in createFontPathsArray
+      // This runs even if _FPDF_DestroyLibrary() throws
+      const { wasmExports } = this.module;
+      for (const ptr of this.fontPathPtrs) {
+        wasmExports.free(ptr);
+      }
+      this.fontPathPtrs = [];
     }
-    this.fontPathPtrs = [];
   }
 }
 
