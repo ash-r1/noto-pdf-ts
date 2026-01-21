@@ -100,7 +100,7 @@ const FONTS_ALL_MAPPINGS = [
   {
     file: 'NotoSansArabic[wdth,wght].ttf',
     repo: 'arabic',
-    release: 'NotoSansArabic-v2.014',
+    release: 'NotoSansArabic-v2.013',
     archivePath: 'NotoSansArabic/full/variable-ttf/NotoSansArabic[wdth,wght].ttf',
   },
   // Hebrew
@@ -136,14 +136,14 @@ const FONTS_ALL_MAPPINGS = [
     file: 'NotoSansTelugu[wdth,wght].ttf',
     repo: 'telugu',
     release: 'NotoSansTelugu-v2.005',
-    archivePath: 'NotoSansTelugu/full/variable-ttf/NotoSansTelugu[wdth,wght].ttf',
+    archivePath: 'NotoSansTelugu/full/variable/NotoSansTelugu[wdth,wght].ttf',
   },
   // Gujarati
   {
     file: 'NotoSansGujarati[wdth,wght].ttf',
     repo: 'gujarati',
     release: 'NotoSansGujarati-v2.106',
-    archivePath: 'NotoSansGujarati/full/variable-ttf/NotoSansGujarati[wdth,wght].ttf',
+    archivePath: 'NotoSansGujarati/full/variable/NotoSansGujarati[wdth,wght].ttf',
   },
   // Kannada
   {
@@ -164,7 +164,7 @@ const FONTS_ALL_MAPPINGS = [
     file: 'NotoSansOriya[wdth,wght].ttf',
     repo: 'oriya',
     release: 'NotoSansOriya-v2.006',
-    archivePath: 'NotoSansOriya/full/variable-ttf/NotoSansOriya[wdth,wght].ttf',
+    archivePath: 'NotoSansOriya/full/variable/NotoSansOriya[wdth,wght].ttf',
   },
   // Gurmukhi
   {
@@ -185,7 +185,7 @@ const FONTS_ALL_MAPPINGS = [
     file: 'NotoSansThai[wdth,wght].ttf',
     repo: 'thai',
     release: 'NotoSansThai-v2.002',
-    archivePath: 'NotoSansThai/full/variable-ttf/NotoSansThai[wdth,wght].ttf',
+    archivePath: 'NotoSansThai/full/variable/NotoSansThai[wdth,wght].ttf',
   },
   // Lao
   {
@@ -206,21 +206,21 @@ const FONTS_ALL_MAPPINGS = [
     file: 'NotoSansKhmer[wdth,wght].ttf',
     repo: 'khmer',
     release: 'NotoSansKhmer-v2.004',
-    archivePath: 'NotoSansKhmer/full/variable-ttf/NotoSansKhmer[wdth,wght].ttf',
+    archivePath: 'NotoSansKhmer/full/variable/NotoSansKhmer[wdth,wght].ttf',
   },
   // Armenian
   {
     file: 'NotoSansArmenian[wdth,wght].ttf',
     repo: 'armenian',
     release: 'NotoSansArmenian-v2.008',
-    archivePath: 'NotoSansArmenian/full/variable-ttf/NotoSansArmenian[wdth,wght].ttf',
+    archivePath: 'NotoSansArmenian/full/variable/NotoSansArmenian[wdth,wght].ttf',
   },
   // Georgian
   {
     file: 'NotoSansGeorgian[wdth,wght].ttf',
     repo: 'georgian',
     release: 'NotoSansGeorgian-v2.005',
-    archivePath: 'NotoSansGeorgian/full/variable-ttf/NotoSansGeorgian[wdth,wght].ttf',
+    archivePath: 'NotoSansGeorgian/full/variable/NotoSansGeorgian[wdth,wght].ttf',
   },
   // Ethiopic
   {
@@ -270,8 +270,10 @@ function extractFromZip(zipPath, filePattern, outputDir) {
   fs.mkdirSync(outputDir, { recursive: true });
 
   try {
+    // Escape brackets for unzip (they are treated as glob patterns)
+    const escapedPattern = filePattern.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
     // Extract specific file(s) matching the pattern
-    execSync(`unzip -o "${zipPath}" "${filePattern}" -d "${outputDir}"`, {
+    execSync(`unzip -o "${zipPath}" "${escapedPattern}" -d "${outputDir}"`, {
       stdio: 'inherit',
     });
   } catch (error) {
