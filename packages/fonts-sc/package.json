@@ -1,6 +1,6 @@
 {
   "name": "@noto-pdf-ts/fonts-sc",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Noto Sans Simplified Chinese font for noto-pdf-ts",
   "type": "module",
   "main": "./dist/index.cjs",
