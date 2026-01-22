@@ -152,12 +152,10 @@ website/src/content/docs/api/
 # pnpm store
 .pnpm-store/
 
-# Monorepo: Font files (downloaded, not committed)
-packages/fonts-*/fonts/*.ttf
-packages/fonts-*/fonts/*.ttc
-
-# Monorepo: Test fixtures (keep structure, not all files)
-fixtures/fonts/*.ttc
+# Monorepo: Font files (managed by Git LFS)
+# packages/fonts-*/fonts/*.ttf
+# packages/fonts-*/fonts/*.ttc
+# fixtures/fonts/*.ttc
 
 # Temporary font download directory
 .tmp-fonts/
