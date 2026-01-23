@@ -1,6 +1,6 @@
 {
   "name": "@noto-pdf-ts/fonts-jp",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Noto Sans Japanese font for noto-pdf-ts",
   "type": "module",
   "main": "./dist/index.cjs",

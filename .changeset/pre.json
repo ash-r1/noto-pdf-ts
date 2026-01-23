@@ -13,6 +13,7 @@
     "noto-pdf-ts-docs": "0.0.1"
   },
   "changesets": [
+    "fix-fonts-all-missing-fonts",
     "fix-wasm-path",
     "notopdf-instance-api"
   ]
